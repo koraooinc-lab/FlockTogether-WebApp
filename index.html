@@ -66,6 +66,8 @@
     <!-- 1. LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-card">
+            <!-- LOGO ADDED HERE! -->
+            <img src="logo.png" alt="Flock Together Logo" style="width: 120px; height: auto; margin-bottom: 15px;">
             <h2 style="margin-top: 0; color: var(--primary);">Flock Together</h2>
             <p style="font-size: 14px; margin-bottom: 25px;">Log in or create a profile</p>
             <input type="text" id="username-input" placeholder="Username...">
@@ -80,6 +82,8 @@
         <!-- SIDEBAR TABS -->
         <div class="sidebar">
             <div style="text-align: center; margin-bottom: 40px;">
+                <!-- LOGO ADDED HERE! -->
+                <img src="logo.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 10px;">
                 <h2 style="color: var(--primary); margin: 0; font-weight: 800;">Flock Together</h2>
             </div>
             <button class="tab-btn active" onclick="switchTab('dashboard')">📋 Dashboard</button>
@@ -229,7 +233,11 @@
     <!-- HIDDEN HTML TEMPLATE FOR PDF GENERATION -->
     <div id="pdf-template">
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #007BFF; padding-bottom: 10px; margin-bottom: 20px;">
-            <h1 style="color: #007BFF; margin: 0;">Flock <span style="color: #FFD700; font-style: italic;">Together</span></h1>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <!-- LOGO ON PDF! -->
+                <img src="logo.png" style="height: 50px; width: auto;">
+                <h1 style="color: #007BFF; margin: 0;">Flock <span style="color: #FFD700; font-style: italic;">Together</span></h1>
+            </div>
             <div style="text-align: right;">
                 <h3 id="pdf-day-title" style="margin: 0; color: #007BFF;">Monday</h3>
                 <p id="pdf-date-title" style="margin: 0; color: #555;">DATE: 01/01/24</p>
@@ -279,7 +287,7 @@
 
     <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
-        // 🔒 DISCORD WEBHOOK (Fully Configured)
+        // 🔒 DISCORD WEBHOOK (Fully Configured!)
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
         // APP DATA
