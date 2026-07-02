@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flock Together Planner</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Using native jsPDF instead of html2pdf for perfect, crisp generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         :root {
@@ -267,72 +268,6 @@
         </div>
     </div>
 
-    <!-- ================= THE BRANDED PDF TEMPLATE ================= -->
-    <!-- It remains hidden until generation! -->
-    <div id="pdf-template" style="display: none; width: 800px; padding: 40px; background: white; font-family: 'Poppins', sans-serif;">
-        
-        <div id="pdf-header-border" style="display: flex; justify-content: space-between; border-bottom: 2px solid #007BFF; padding-bottom: 10px; margin-bottom: 20px;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <img src="logo.png" style="height: 50px; width: auto;" onerror="this.style.display='none'">
-                <h1 id="pdf-main-title" style="color: #007BFF; margin: 0;">Flock Together</h1>
-            </div>
-            <div style="text-align: right;">
-                <h3 id="pdf-day-title" style="margin: 0; color: #007BFF;">Monday</h3>
-                <p id="pdf-date-title" style="margin: 0; color: #555; font-weight: bold;">DATE: 01/01/24</p>
-            </div>
-        </div>
-
-        <div style="display: flex; gap: 20px;">
-            <!-- Left Col (Schedule & Self-Care) -->
-            <div style="width: 35%;">
-                <div class="pdf-box" style="background: #F5FAFF; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <h3 class="pdf-box-title" style="color: #007BFF; text-align: center; margin-top: 0;">SCHEDULE ⏱</h3>
-                    <div id="pdf-schedule" style="font-size: 12px; line-height: 1.8;"></div>
-                </div>
-                <div class="pdf-box" style="background: #F5FAFF; padding: 15px; border-radius: 10px;">
-                    <h3 class="pdf-box-title" style="color: #007BFF; text-align: center; margin-top: 0;">SELF-CARE ♥</h3>
-                    <div id="pdf-meds" style="font-size: 12px; line-height: 1.8; margin-bottom: 15px;"></div>
-                    <!-- The 8-Glass Water Tracker -->
-                    <div style="text-align: center; font-size: 11px; font-weight: bold; color: #A0AEC0;">WATER</div>
-                    <div style="text-align: center; font-size: 16px; color: #63B3ED; margin-top: 5px; letter-spacing: 2px;">💧 💧 💧 💧 💧 💧 💧 💧</div>
-                </div>
-            </div>
-
-            <!-- Right Col (Verse, Meal Plan, To-Do, Brain Dump) -->
-            <div style="width: 65%;">
-                <div id="pdf-verse-box" style="background: #FFF8E7; border: 2px solid #FFD700; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
-                    <h3 id="pdf-verse-title" style="color: #D4AF37; margin-top: 0;">📖 VERSE OF THE DAY</h3>
-                    <p id="pdf-verse" style="font-style: italic; font-size: 12px; margin: 0; color: #333;"></p>
-                </div>
-                
-                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                    <div class="pdf-box" style="background: #F5FAFF; padding: 15px; border-radius: 10px; flex: 1;">
-                        <h3 class="pdf-box-title" style="color: #007BFF; text-align: center; margin-top: 0;">🎯 TOP PRIORITY</h3>
-                        <h4 id="pdf-bigtask" style="text-align: center; color: #FFD700; margin: 5px 0;"></h4>
-                        <div id="pdf-chunks" style="font-size: 12px; line-height: 1.8;"></div>
-                    </div>
-                    <div class="pdf-box" style="background: #F5FAFF; padding: 15px; border-radius: 10px; flex: 1;">
-                        <h3 class="pdf-box-title" style="color: #007BFF; text-align: center; margin-top: 0;">MEAL PLAN 🍴</h3>
-                        <p class="pdf-meal-line" style="border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 12px;"><strong>B</strong></p>
-                        <p class="pdf-meal-line" style="border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 12px;"><strong>L</strong></p>
-                        <p class="pdf-meal-line" style="border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 12px;"><strong>D</strong></p>
-                        <p class="pdf-meal-line" style="border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 12px;"><strong>S</strong></p>
-                    </div>
-                </div>
-
-                <div class="pdf-box" style="background: #F5FAFF; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-                    <h3 class="pdf-box-title" style="color: #007BFF; text-align: center; margin-top: 0;">TO-DO LIST 📝</h3>
-                    <div id="pdf-todos" style="font-size: 12px; line-height: 1.8;"></div>
-                </div>
-
-                <div class="pdf-box" style="background: #F5FAFF; padding: 15px; border-radius: 10px;">
-                    <h3 class="pdf-box-title" style="color: #007BFF; text-align: center; margin-top: 0;">BRAIN DUMP 🧠</h3>
-                    <p id="pdf-notes" style="font-size: 12px; min-height: 40px; margin: 0;"></p>
-                </div>
-            </div>
-        </div>
-    </div>
-
 
     <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
@@ -527,104 +462,206 @@
         function addAppt() { let date = document.getElementById('appt-date').value; let time = document.getElementById('appt-time').value; let desc = document.getElementById('appt-desc').value; if(!date||!desc) return; db.appointments.push({date, time, desc}); document.getElementById('appt-desc').value = ''; saveData(); refreshAllLists(); }
         function addMed() { let n = document.getElementById('med-name').value; let t = document.getElementById('med-time').value; if(!n) return; db.medications.push(t ? `${n} (${t})` : n); document.getElementById('med-name').value = ''; document.getElementById('med-time').value = ''; saveData(); refreshAllLists(); }
 
-        // --- 4. THEME & PDF GENERATOR MAGIC ---
+        // --- NATIVE PDF GENERATION WITH jsPDF ---
         function generatePDF() {
             let btn = document.getElementById("pdf-btn");
-            btn.innerText = "⏳ Generating Planner... Please wait!"; btn.style.opacity = "0.7";
-            
+            btn.innerText = "⏳ Generating Vector PDF..."; 
+            btn.style.opacity = "0.7";
+
+            // Initialize the native jsPDF engine (Letter size, measured in points)
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+
+            // --- 1. GATHER ALL DATA ---
             let dateVal = document.getElementById('print-date').value; 
             let dateParts = dateVal.split('-'); 
             let d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            
-            // --- THEME ENGINE ---
-            let themeSel = document.getElementById('print-theme').value;
-            let tBg, tHeader, tBody, tAccent, tDivider, tIcon;
-            
-            if (themeSel === 'boho') {
-                tBg = "#FDF4F4"; tHeader = "#D5A586"; tBody = "#8B7B7B"; tAccent = "#AEC6CF"; tDivider = "#F0D8D8"; tIcon = "♥";
-                document.getElementById('pdf-main-title').innerHTML = `♥ DAILY <span style="color:${tAccent}; font-style:italic;">Planner</span>`;
-            } else if (themeSel === 'ocean') {
-                tBg = "#F5F0FF"; tHeader = "#8E7CC3"; tBody = "#6A5ACD"; tAccent = "#B4A7D6"; tDivider = "#E6E6FA"; tIcon = "○";
-                document.getElementById('pdf-main-title').innerHTML = `Ocean <span style="color:${tAccent}; font-style:italic;">Planner</span>`;
-            } else if (themeSel === 'botanical') {
-                tBg = "#F4F7F4"; tHeader = "#5A7353"; tBody = "#4A5248"; tAccent = "#8A9A86"; tDivider = "#D9E2D9"; tIcon = "✿";
-                document.getElementById('pdf-main-title').innerHTML = `Botanical <span style="color:${tAccent}; font-style:italic;">Planner</span>`;
-            } else if (themeSel === 'minimal') {
-                tBg = "#FAFAFA"; tHeader = "#000000"; tBody = "#333333"; tAccent = "#000000"; tDivider = "#E0E0E0"; tIcon = "☐";
-                document.getElementById('pdf-main-title').innerHTML = `Daily <span style="color:${tAccent}; font-style:italic;">Planner</span>`;
-            } else {
-                tBg = "#F5FAFF"; tHeader = "#007BFF"; tBody = "#333333"; tAccent = "#FFD700"; tDivider = "#CCE5FF"; tIcon = "○";
-                document.getElementById('pdf-main-title').innerHTML = `Flock <span style="color:${tAccent}; font-style:italic;">Together</span>`;
-            }
+            let dayName = dayNames[d.getDay()];
+            let formattedDate = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
 
-            // Apply Theme Colors to PDF structure
-            document.getElementById('pdf-header-border').style.borderBottomColor = tHeader;
-            document.getElementById('pdf-main-title').style.color = tHeader;
-            document.getElementById('pdf-day-title').style.color = tHeader;
-            
-            document.getElementById('pdf-verse-box').style.backgroundColor = tBg;
-            document.getElementById('pdf-verse-box').style.border = `2px solid ${tAccent}`;
-            document.getElementById('pdf-verse-title').style.color = tAccent;
-            document.getElementById('pdf-bigtask').style.color = tAccent;
+            let verseText = document.getElementById('verse-text').innerText;
+            let bigTask = document.getElementById('big-task').value.toUpperCase();
+            let chunks = document.getElementById('chunk-steps').value.split('\n').filter(c => c.trim() !== "");
+            let notes = document.getElementById('notes-text').value;
+            let reading = getReadingString();
 
-            document.querySelectorAll('.pdf-box').forEach(box => { box.style.backgroundColor = tBg; });
-            document.querySelectorAll('.pdf-box-title').forEach(title => { title.style.color = tHeader; });
-            document.querySelectorAll('.pdf-meal-line').forEach(line => { line.style.borderBottom = `1px solid ${tDivider}`; line.style.color = tBody; });
-
-            // --- INJECT TEXT & LISTS ---
-            document.getElementById('pdf-day-title').innerText = dayNames[d.getDay()];
-            document.getElementById('pdf-date-title').innerText = `DATE: ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
-            document.getElementById('pdf-verse').innerText = document.getElementById('verse-text').innerText;
-            document.getElementById('pdf-notes').innerText = document.getElementById('notes-text').value || " ";
-            document.getElementById('pdf-bigtask').innerText = document.getElementById('big-task').value.toUpperCase();
-            
-            // Build Chunks
-            let chunksHtml = '';
-            document.getElementById('chunk-steps').value.split('\n').forEach(c => { if(c.trim()!="") chunksHtml += `<p style="border-bottom: 1px solid ${tDivider}; padding-bottom:3px; margin: 5px 0; color: ${tBody};">${tIcon} ${c}</p>`; });
-            document.getElementById('pdf-chunks').innerHTML = chunksHtml || `<p style="border-bottom: 1px solid ${tDivider}; padding-bottom:10px;"></p><p style="border-bottom: 1px solid ${tDivider}; padding-bottom:10px;"></p>`;
-
-            // Build Meds / Self-Care
-            let medsHtml = '';
-            document.querySelectorAll('.med-print-item').forEach(el => { if(el.querySelector('input').checked) { medsHtml += `<p style="border-bottom: 1px solid ${tDivider}; padding-bottom:3px; margin: 5px 0; color: ${tBody};">${tIcon} ${el.querySelector('.task-name').innerText}</p>`; } });
-            document.getElementById('pdf-meds').innerHTML = medsHtml;
-
-            // Build To-Do List
-            let todosHtml = `<p style="border-bottom: 1px solid ${tDivider}; padding-bottom:3px; margin: 5px 0; font-weight: bold; color: ${tBody};">${tIcon} Bible Reading: ${getReadingString()}</p>`;
-            document.querySelectorAll('.task-print-item').forEach(el => { if(el.querySelector('input').checked) { todosHtml += `<p style="border-bottom: 1px solid ${tDivider}; padding-bottom:3px; margin: 5px 0; color: ${tBody};">${tIcon} ${el.querySelector('.task-name').innerText.substring(2)}</p>`; } });
-            document.getElementById('pdf-todos').innerHTML = todosHtml;
-
-            // Build Schedule
-            let schedHtml = ''; let todaysAppts = db.appointments.filter(a => a.date === dateVal);
-            for(let i=6; i<=22; i++) {
-                let ampm = i < 12 ? "AM" : "PM"; let hr = i > 12 ? i - 12 : i; let hrStr = hr < 10 ? `0${hr}` : hr; let tLabel = `${hrStr}:00 ${ampm}`;
-                let foundAppt = todaysAppts.find(a => a.time === tLabel);
-                schedHtml += `<div style="display:flex; border-bottom: 1px solid ${tDivider}; padding: 3px 0; margin-bottom:2px; color: ${tBody};"><div style="width: 60px; font-weight:bold; color: ${tHeader};">${tLabel}</div><div style="flex:1;">${foundAppt ? '★ ' + foundAppt.desc : ''}</div></div>`;
-            }
-            document.getElementById('pdf-schedule').innerHTML = schedHtml;
-
-            // SNAP THE PDF SCREENSHOT
-            let element = document.getElementById('pdf-template');
-            let clone = element.cloneNode(true);
-            clone.style.display = 'block'; clone.style.position = 'absolute'; clone.style.top = '0'; clone.style.left = '0'; clone.style.zIndex = '-9999';
-            document.body.appendChild(clone);
-
-            let opt = { 
-                margin: 0.5, 
-                filename: 'FlockTogether_Planner.pdf', 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                // Enable CORS to allow the canvas to render external/hosted images (like logo.png) without failing
-                html2canvas: { scale: 2, scrollY: 0, windowWidth: 800, useCORS: true }, 
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
-            };
-            
-            window.scrollTo(0,0);
-            
-            // Bypass Blob URLs and trigger an immediate file download using .save()
-            html2pdf().set(opt).from(clone).save().then(function() {
-                document.body.removeChild(clone);
-                btn.innerText = "✨ Generate My Planner PDF"; 
-                btn.style.opacity = "1"; 
+            let meds = [];
+            document.querySelectorAll('.med-print-item').forEach(el => { 
+                if(el.querySelector('input').checked) meds.push(el.querySelector('.task-name').innerText);
             });
+
+            let todos = [`Bible Reading: ${reading}`];
+            document.querySelectorAll('.task-print-item').forEach(el => { 
+                if(el.querySelector('input').checked) todos.push(el.querySelector('.task-name').innerText.replace(/^[🔄📅🎯]\s*/, ''));
+            });
+
+            let todaysAppts = db.appointments.filter(a => a.date === dateVal);
+
+            // --- 2. SET UP THEMES ---
+            let themeSel = document.getElementById('print-theme').value;
+            let primary = [0, 123, 255]; // Blue
+            let accent = [255, 215, 0];  // Gold
+            let textCol = [50, 50, 50];  // Gray
+
+            if (themeSel === 'boho') { primary = [213, 165, 134]; accent = [174, 198, 207]; }
+            else if (themeSel === 'ocean') { primary = [142, 124, 195]; accent = [180, 167, 214]; }
+            else if (themeSel === 'botanical') { primary = [90, 115, 83]; accent = [138, 154, 134]; }
+            else if (themeSel === 'minimal') { primary = [0, 0, 0]; accent = [0, 0, 0]; }
+
+            // --- HELPER TO DRAW BOXES ---
+            function drawBox(title, x, y, w, h) {
+                doc.setDrawColor(230, 230, 230);
+                doc.setFillColor(250, 252, 255);
+                if(themeSel === 'minimal') doc.setFillColor(250, 250, 250);
+                doc.roundedRect(x, y, w, h, 5, 5, 'FD'); // Fill & Draw outline
+                
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(primary[0], primary[1], primary[2]);
+                doc.text(title, x + (w/2), y + 16, { align: 'center' });
+                return y + 25; // Returns the starting Y coordinate for text inside
+            }
+
+            // --- 3. DRAW HEADER ---
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(24);
+            doc.setTextColor(primary[0], primary[1], primary[2]);
+            doc.text("Flock Together", 40, 50);
+
+            doc.setFontSize(16);
+            doc.text(dayName, 572, 40, { align: 'right' });
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text("DATE: " + formattedDate, 572, 55, { align: 'right' });
+
+            doc.setDrawColor(primary[0], primary[1], primary[2]);
+            doc.setLineWidth(1.5);
+            doc.line(40, 65, 572, 65);
+
+            // --- 4. LEFT COLUMN: SCHEDULE ---
+            let cY = drawBox("SCHEDULE", 40, 80, 180, 420);
+            for(let i=6; i<=22; i++) {
+                let ampm = i < 12 ? "AM" : "PM"; 
+                let hr = i > 12 ? i - 12 : i; 
+                let hrStr = hr < 10 ? `0${hr}` : hr; 
+                let tLabel = `${hrStr}:00 ${ampm}`;
+                let appt = todaysAppts.find(a => a.time === tLabel);
+
+                doc.setFontSize(9);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(primary[0], primary[1], primary[2]);
+                doc.text(tLabel, 45, cY + 8);
+                
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+                if(appt) {
+                    let txt = appt.desc.length > 22 ? appt.desc.substring(0, 22) + "..." : appt.desc;
+                    doc.text("★ " + txt, 95, cY + 8);
+                }
+                
+                doc.setDrawColor(220, 220, 220);
+                doc.setLineWidth(0.5);
+                doc.line(45, cY + 12, 210, cY + 12);
+                cY += 23; // spacing between hours
+            }
+
+            // --- 5. LEFT COLUMN: SELF CARE ---
+            cY = drawBox("SELF-CARE", 40, 510, 180, 200);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+            
+            meds.forEach(m => {
+                doc.circle(48, cY - 3, 2.5, 'F'); // Draw bullet point
+                doc.text(m, 55, cY);
+                cY += 16;
+            });
+
+            // Water Tracker (8 little empty boxes)
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(150, 150, 150);
+            doc.text("WATER", 130, 670, { align: 'center' });
+            
+            let wx = 80;
+            doc.setDrawColor(primary[0], primary[1], primary[2]);
+            for(let i=0; i<8; i++) {
+                doc.rect(wx, 678, 10, 10);
+                wx += 14;
+            }
+
+            // --- 6. RIGHT COLUMN: VERSE ---
+            doc.setDrawColor(accent[0], accent[1], accent[2]);
+            doc.setFillColor(255, 252, 245);
+            doc.roundedRect(240, 80, 332, 60, 5, 5, 'FD');
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(accent[0], accent[1], accent[2]);
+            doc.text("VERSE OF THE DAY", 406, 96, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            doc.setTextColor(50, 50, 50);
+            let wrappedVerse = doc.splitTextToSize(verseText, 310);
+            doc.text(wrappedVerse, 406, 114, { align: 'center' });
+
+            // --- 7. RIGHT COLUMN: PRIORITIES & MEALS ---
+            let tY = drawBox("TOP PRIORITY", 240, 150, 160, 150);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(accent[0], accent[1], accent[2]);
+            let wrappedBigTask = doc.splitTextToSize(bigTask, 150);
+            doc.text(wrappedBigTask, 320, tY + 8, { align: 'center' });
+            tY += (wrappedBigTask.length * 12) + 5; // Dynamically push down based on task text length
+
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+            chunks.forEach(c => {
+                doc.rect(245, tY - 8, 8, 8); // draw tiny checkbox
+                doc.text(c, 258, tY);
+                tY += 16;
+            });
+
+            let mY = drawBox("MEAL PLAN", 412, 150, 160, 150);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+            ["B:", "L:", "D:", "S:"].forEach(m => {
+                doc.text(m, 420, mY + 10);
+                doc.setDrawColor(220, 220, 220);
+                doc.line(435, mY + 12, 560, mY + 12);
+                mY += 30;
+            });
+
+            // --- 8. RIGHT COLUMN: TO DO LIST ---
+            let tdY = drawBox("TO-DO LIST", 240, 310, 332, 250);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+            todos.forEach(t => {
+                doc.setDrawColor(150, 150, 150);
+                doc.rect(248, tdY - 8, 8, 8); // draw tiny checkbox
+                doc.text(t, 262, tdY);
+                doc.setDrawColor(220, 220, 220);
+                doc.line(248, tdY + 4, 560, tdY + 4);
+                tdY += 20;
+            });
+
+            // --- 9. RIGHT COLUMN: BRAIN DUMP ---
+            let bdY = drawBox("BRAIN DUMP", 240, 570, 332, 140);
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+            let wrappedNotes = doc.splitTextToSize(notes, 310);
+            doc.text(wrappedNotes, 250, bdY + 5);
+
+            // --- 10. OPEN PDF DIRECTLY IN A NEW TAB ---
+            // Because this is generated natively, it opens instantly!
+            const pdfBlobUrl = doc.output('bloburl');
+            window.open(pdfBlobUrl, '_blank');
+
+            // Reset Button
+            btn.innerText = "✨ Generate My Planner PDF"; 
+            btn.style.opacity = "1"; 
         }
     </script>
 </body>
