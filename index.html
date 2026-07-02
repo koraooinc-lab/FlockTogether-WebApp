@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flock Together Planner</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- Using native jsPDF instead of html2pdf for perfect, crisp generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
@@ -419,7 +420,14 @@
             document.getElementById('wiz-results').innerHTML = resultsHtml; document.querySelectorAll('.wizard-step').forEach(e => e.classList.remove('active')); document.getElementById('wiz-step-3').classList.add('active');
         }
 
-        function wizFinish() { finalGroupedTasks.forEach(taskName => { autoScheduleEngine(taskName, 'once'); }); closeWizard(); alert("Success! Your tasks have been load-balanced across the upcoming week!"); }
+        function wizFinish() { 
+            finalGroupedTasks.forEach(taskName => { 
+                // CHANGED: From 'once' to 'weekly' so they repeat automatically!
+                autoScheduleEngine(taskName, 'weekly'); 
+            }); 
+            closeWizard(); 
+            alert("Success! Your tasks have been load-balanced and will repeat every week!"); 
+        }
 
         function getTaskLoadForDate(dateStr, dayOfWeekIndex) { let wCount = db.weeklies.filter(w => w.dayOfWeek === dayOfWeekIndex).length; let oCount = db.oneOffs.filter(o => o.dateStr === dateStr).length; return wCount + oCount; }
 
