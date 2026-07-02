@@ -279,7 +279,7 @@
 
     <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
-        // 🔒 DISCORD WEBHOOK (Paste your exact link here inside the quotes!)
+        // 🔒 DISCORD WEBHOOK (Fully Configured)
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
         // APP DATA
@@ -369,15 +369,43 @@
             } catch(e) { console.log("Discord error:", e); }
         }
 
+        // SMART VERSE ENGINE (Bulletproof Line-by-Line Builder)
         async function fetchVerse() {
             try {
                 document.getElementById('verse-text').innerText = "Loading the Word...";
                 let res = await fetch("https://raw.githubusercontent.com/koraooinc-lab/RobloxBibleData/refs/heads/main/Genesis.txt");
-                let text = await res.text();
-                let flat = text.replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ");
-                let verses = flat.split(/(?=\b\d+:\d+\b|\[\d+:\d+\])/).map(v => v.trim()).filter(v => v.length > 15);
-                if(verses.length > 0) document.getElementById('verse-text').innerText = verses[Math.floor(Math.random()*verses.length)];
-            } catch(e) { document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; }
+                let rawText = await res.text();
+                
+                let rawLines = rawText.split(/\r?\n|\r/);
+                let parsedVerses = [];
+                let currentBuilder = "";
+                let verseRegex = /^(?:[1-3]?\s*[A-Za-z]+\s+\d+:\d+|\d+:\d+|\[\d+:\d+\])/;
+
+                for(let line of rawLines) {
+                    let trimmed = line.trim();
+                    if(!trimmed) continue;
+                    
+                    if(verseRegex.test(trimmed)) {
+                        if(currentBuilder) parsedVerses.push(currentBuilder.trim());
+                        currentBuilder = trimmed;
+                    } else {
+                        if(currentBuilder) currentBuilder += " " + trimmed;
+                        else parsedVerses.push(trimmed);
+                    }
+                }
+                if(currentBuilder) parsedVerses.push(currentBuilder.trim());
+
+                // Filter out tiny fragments
+                parsedVerses = parsedVerses.filter(v => v.length > 15);
+
+                if(parsedVerses.length > 0) {
+                    document.getElementById('verse-text').innerText = parsedVerses[Math.floor(Math.random() * parsedVerses.length)];
+                } else {
+                    throw new Error("No verses found");
+                }
+            } catch(e) { 
+                document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; 
+            }
         }
 
         // --- 3. SETTINGS & LISTS ENGINE ---
