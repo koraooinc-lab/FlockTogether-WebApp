@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flock Together Planner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0096FF;
+            --gold: #FFD700;
+            --dark: #2D3748;
+            --bg: #F0F8FF;
+            --card-bg: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: #333;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        /* LOGIN SCREEN */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); display: flex; align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        .login-card {
+            background: var(--card-bg); padding: 40px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 300px;
+        }
+        .login-card input {
+            width: 90%; padding: 12px; margin: 10px 0 20px 0; border-radius: 8px;
+            border: 1px solid #ddd; font-family: 'Poppins', sans-serif;
+        }
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 12px 20px;
+            border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px;
+        }
+        .btn-green { background: #48BB78; }
+        
+        /* DASHBOARD */
+        #app-screen { display: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .streak-badge { background: #FFF3CD; color: #856404; padding: 8px 15px; border-radius: 12px; font-weight: bold; }
+        
+        .card {
+            background: var(--card-bg); padding: 25px; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;
+        }
+        .gold-card { border: 2px solid var(--gold); background: #FFF8E7; }
+        
+        h2 { margin-top: 0; color: var(--primary); }
+        .gold-text { color: #D4AF37; }
+
+        .verse-box { font-style: italic; color: #4A5568; margin: 15px 0; }
+        .reading-box { font-size: 24px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <h2 style="margin-bottom: 5px;">Flock Together</h2>
+            <p style="font-size: 12px; color: #777; margin-bottom: 20px;">Enter a username to continue</p>
+            <input type="text" id="username-input" placeholder="Username...">
+            <button class="btn" onclick="login()">Enter the Hub</button>
+        </div>
+    </div>
+
+    <!-- MAIN APP DASHBOARD -->
+    <div id="app-screen" class="container">
+        
+        <div class="header">
+            <div>
+                <h1 id="welcome-text" style="margin: 0; color: var(--dark);">Good Morning!</h1>
+                <p style="margin: 0; color: #718096;">Let's make today manageable.</p>
+            </div>
+            <div class="streak-badge" id="streak-badge">🔥 1 Day Streak!</div>
+        </div>
+
+        <div class="card gold-card grid">
+            <div>
+                <h3 class="gold-text" style="margin-top:0;">📖 Verse of the Day</h3>
+                <div id="verse-text" class="verse-box">Loading the Word...</div>
+                <button class="btn" style="background:#D4AF37; width: auto;" onclick="fetchVerse()">Draw New Verse</button>
+            </div>
+            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                <h3 class="gold-text" style="margin:0;">📚 Today's Reading</h3>
+                <div id="reading-text" class="reading-box">Genesis 1-4</div>
+                <button class="btn btn-green" onclick="advanceReading()">Mark Read & Advance</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🧹 Daily Auto-Schedule</h2>
+            <div style="margin-bottom: 10px;">
+                <input type="checkbox" checked> 🔥 Morning Bible Study
+            </div>
+            <div style="margin-bottom: 10px;">
+                <input type="checkbox" checked> ⚡ Make the bed
+            </div>
+            <div style="margin-bottom: 10px;">
+                <input type="checkbox" checked> 💊 Take Medications
+            </div>
+        </div>
+
+    </div>
+
+    <!-- APP LOGIC (JAVASCRIPT) -->
+    <script>
+        // 1. Data Setup (Using Browser LocalStorage instead of a JSON file!)
+        let userData = JSON.parse(localStorage.getItem("flockData")) || {
+            username: "", streakDays: 0, lastOpened: "", readingIndex: 0
+        };
+
+        const bibleBooks = [
+            "Genesis,50", "Exodus,40", "Leviticus,27", "Numbers,36", "Deuteronomy,34", "Joshua,24", "Judges,21", "Ruth,4", "1 Samuel,31", "2 Samuel,24", "1 Kings,22", "2 Kings,25", "1 Chronicles,29", "2 Chronicles,36", "Ezra,10", "Nehemiah,13", "Esther,10", "Job,42", "Psalms,150", "Proverbs,31", "Ecclesiastes,12", "Song of Solomon,8", "Isaiah,66", "Jeremiah,52", "Lamentations,5", "Ezekiel,48", "Daniel,12", "Hosea,14", "Joel,3", "Amos,9", "Obadiah,1", "Jonah,4", "Micah,7", "Nahum,3", "Habakkuk,3", "Zephaniah,3", "Haggai,2", "Zechariah,14", "Malachi,4", "Matthew,28", "Mark,16", "Luke,24", "John,21", "Acts,28", "Romans,16", "1 Corinthians,16", "2 Corinthians,13", "Galatians,6", "Ephesians,6", "Philippians,4", "Colossians,4", "1 Thessalonians,5", "2 Thessalonians,3", "1 Timothy,6", "2 Timothy,4", "Titus,3", "Philemon,1", "Hebrews,13", "James,5", "1 Peter,5", "2 Peter,3", "1 John,5", "2 John,3", "3 John,1", "Jude,1", "Revelation,22"
+        ];
+        let allChapters = [];
+        bibleBooks.forEach(b => {
+            let parts = b.split(',');
+            for(let i=1; i<=parseInt(parts[1]); i++) allChapters.push(`${parts[0]} ${i}`);
+        });
+
+        // 2. Boot App
+        window.onload = () => {
+            if (userData.username !== "") {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-screen').style.display = 'block';
+                startApp();
+            }
+        };
+
+        // 3. Login
+        function login() {
+            let user = document.getElementById("username-input").value.trim();
+            if(user === "") return alert("Please enter a username!");
+            
+            userData.username = user;
+            saveData();
+            
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-screen').style.display = 'block';
+            startApp();
+        }
+
+        function startApp() {
+            document.getElementById('welcome-text').innerText = `Good Morning, ${userData.username}!`;
+            checkStreak();
+            fetchVerse();
+            updateReadingUI();
+        }
+
+        // 4. Streak Engine
+        function checkStreak() {
+            let today = new Date().toDateString();
+            let yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            if (userData.lastOpened === yesterday.toDateString()) {
+                userData.streakDays++;
+            } else if (userData.lastOpened !== today) {
+                userData.streakDays = 1;
+            }
+            userData.lastOpened = today;
+            saveData();
+
+            document.getElementById('streak-badge').innerText = `🔥 ${userData.streakDays} Day Streak!`;
+        }
+
+        // 5. Reading Engine
+        function updateReadingUI() {
+            let start = userData.readingIndex;
+            if (start >= allChapters.length) start = 0;
+            let startChap = allChapters[start];
+            let endChap = allChapters[Math.min(start + 3, allChapters.length - 1)];
+
+            let startBook = startChap.substring(0, startChap.lastIndexOf(' '));
+            let endBook = endChap.substring(0, endChap.lastIndexOf(' '));
+
+            let displayTxt = (startBook === endBook) 
+                ? `${startBook} ${startChap.substring(startChap.lastIndexOf(' ')+1)}-${endChap.substring(endChap.lastIndexOf(' ')+1)}`
+                : `${startChap} - ${endChap}`;
+            
+            document.getElementById('reading-text').innerText = displayTxt;
+        }
+
+        function advanceReading() {
+            userData.readingIndex += 4;
+            if (userData.readingIndex >= allChapters.length) userData.readingIndex = 0;
+            saveData();
+            updateReadingUI();
+        }
+
+        // 6. GitHub Verse Engine
+        async function fetchVerse() {
+            try {
+                document.getElementById('verse-text').innerText = "Loading the Word...";
+                let response = await fetch("https://raw.githubusercontent.com/koraooinc-lab/RobloxBibleData/refs/heads/main/Genesis.txt");
+                let rawText = await response.text();
+                
+                let flatText = rawText.replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ");
+                let verses = flatText.split(/(?=\b\d+:\d+\b|\[\d+:\d+\])/)
+                                     .map(v => v.trim()).filter(v => v.length > 15);
+
+                if(verses.length > 0) {
+                    let randomVerse = verses[Math.floor(Math.random() * verses.length)];
+                    document.getElementById('verse-text').innerText = randomVerse;
+                }
+            } catch (e) {
+                document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)";
+            }
+        }
+
+        function saveData() { localStorage.setItem("flockData", JSON.stringify(userData)); }
+    </script>
+</body>
+</html>
