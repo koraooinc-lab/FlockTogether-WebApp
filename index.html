@@ -52,7 +52,8 @@
         .check-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
         .check-item input { margin-right: 10px; transform: scale(1.2); }
 
-        #pdf-template { position: absolute; left: -9999px; top: -9999px; width: 800px; padding: 40px; background: white; color: #333; font-family: sans-serif; z-index: -100; }
+        /* FIXED: Hidden properly without confusing the PDF camera */
+        #pdf-template { display: none; width: 800px; padding: 40px; background: white; color: #333; font-family: sans-serif; }
         
         .day-column { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 15px; }
         .day-column h4 { margin-top: 0; color: var(--primary); text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
@@ -71,7 +72,6 @@
     <!-- WIZARD OVERLAY -->
     <div id="wizard-overlay">
         <div class="wizard-box">
-            
             <!-- STEP 1: AREAS -->
             <div id="wiz-step-1" class="wizard-step active">
                 <h2 class="wizard-title">🧙‍♂️ Step 1: The Zones</h2>
@@ -102,7 +102,6 @@
                     <button class="btn btn-green" onclick="wizFinish()">Accept & Schedule Plan ✨</button>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -169,7 +168,7 @@
                     </div>
                 </div>
 
-                <!-- THE NEW WIZARD LAUNCHER -->
+                <!-- THE WIZARD LAUNCHER -->
                 <div class="card robot-card" style="text-align: center; padding: 40px;">
                     <h2 style="color: #805AD5; margin-top: 0;">🧠 Brain Too Cluttered?</h2>
                     <p style="font-size: 15px; margin-bottom: 20px;">Let the algorithm break down your chores, group them efficiently, and balance them across your week automatically.</p>
@@ -185,6 +184,15 @@
                         <h3 style="color: #805AD5; margin-top: 0;">🤖 Algorithm's Plan For Today</h3>
                         <p style="font-size: 12px; color: #888; margin-top:-10px; margin-bottom:10px;">(Change the Date to see other days)</p>
                         <div id="tasks-print-list"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="color: var(--primary); margin-top: 0;">🧩 Task Defroster (PDF Only)</h3>
+                    <p style="font-size: 14px; margin-bottom: 15px;">Break one overwhelming task into tiny, 5-minute steps.</p>
+                    <div class="grid-2">
+                        <div class="input-group"><label>The Overwhelming Task:</label><textarea id="big-task" rows="3"></textarea></div>
+                        <div class="input-group"><label>Tiny Steps (One per line):</label><textarea id="chunk-steps" rows="3"></textarea></div>
                     </div>
                 </div>
 
@@ -254,9 +262,7 @@
                 <div class="card">
                     <h3 style="margin-top: 0; color: var(--dark);">📅 The Week Ahead (Algorithm Overview)</h3>
                     <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Here is how the robot balanced your week.</p>
-                    <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px;" id="weekly-overview">
-                        <!-- JS WILL INJECT THE 7 DAYS HERE -->
-                    </div>
+                    <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px;" id="weekly-overview"></div>
                     
                     <h4 style="margin-top: 20px; color: var(--dark);">🔄 Daily Routines</h4>
                     <div id="dailies-listbox" style="display:flex; flex-direction:column; gap:5px; background: #F7FAFC; padding: 10px; border-radius: 8px;"></div>
@@ -298,6 +304,11 @@
                 <div style="background: #FFF8E7; border: 2px solid #FFD700; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
                     <h3 style="color: #D4AF37; margin-top: 0;">📖 VERSE OF THE DAY</h3>
                     <p id="pdf-verse" style="font-style: italic; font-size: 12px; margin: 0;"></p>
+                </div>
+                <div style="background: #F5FAFF; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h3 style="color: #007BFF; text-align: center; margin-top: 0;">🎯 TOP PRIORITY</h3>
+                    <h4 id="pdf-bigtask" style="text-align: center; color: #FFD700; margin: 5px 0;"></h4>
+                    <div id="pdf-chunks" style="font-size: 12px; line-height: 1.8;"></div>
                 </div>
                 <div style="background: #F5FAFF; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
                     <h3 style="color: #007BFF; text-align: center; margin-top: 0;">TO-DO LIST 📝</h3>
@@ -393,12 +404,8 @@
             } catch(e) { document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; }
         }
 
-
         // ================= WIZARD & AI GROUPING ALGORITHM =================
-        let wizRooms = [];
-        let wizCurrentIdx = 0;
-        let wizTasksByRoom = {};
-        let finalGroupedTasks = [];
+        let wizRooms = []; let wizCurrentIdx = 0; let wizTasksByRoom = {}; let finalGroupedTasks = [];
 
         function openWizard() {
             document.getElementById('wizard-overlay').style.display = 'flex';
@@ -412,10 +419,7 @@
             let input = document.getElementById('wiz-areas-input').value;
             wizRooms = input.split(',').map(r => r.trim()).filter(r => r.length > 0);
             if(wizRooms.length === 0) return alert("Please enter at least one room!");
-            
-            wizCurrentIdx = 0;
-            wizTasksByRoom = {};
-            showRoomInput();
+            wizCurrentIdx = 0; wizTasksByRoom = {}; showRoomInput();
         }
 
         function showRoomInput() {
@@ -428,13 +432,8 @@
         function wizProcessRoom() {
             let tasks = document.getElementById('wiz-tasks-input').value.split('\n').map(t => t.trim()).filter(t => t.length > 0);
             wizTasksByRoom[wizRooms[wizCurrentIdx]] = tasks;
-            
             wizCurrentIdx++;
-            if(wizCurrentIdx < wizRooms.length) {
-                showRoomInput();
-            } else {
-                runMagicAlgorithm();
-            }
+            if(wizCurrentIdx < wizRooms.length) { showRoomInput(); } else { runMagicAlgorithm(); }
         }
 
         function categorizeTask(task) {
@@ -450,7 +449,6 @@
 
         function runMagicAlgorithm() {
             let groups = {};
-            
             for(let room in wizTasksByRoom) {
                 wizTasksByRoom[room].forEach(task => {
                     let cat = categorizeTask(task);
@@ -458,30 +456,21 @@
                     groups[cat].push(`${room} (${task})`);
                 });
             }
-
-            finalGroupedTasks = [];
-            let resultsHtml = "";
-
+            finalGroupedTasks = []; let resultsHtml = "";
             for(let cat in groups) {
                 let megaTaskName = `${cat} -> ${groups[cat].join(' | ')}`;
                 finalGroupedTasks.push(megaTaskName);
                 resultsHtml += `<div style="padding: 10px; border-bottom: 1px solid #E2E8F0;"><strong>${cat}</strong><br><span style="color:#718096">${groups[cat].join(', ')}</span></div>`;
             }
-
             document.getElementById('wiz-results').innerHTML = resultsHtml;
             document.querySelectorAll('.wizard-step').forEach(e => e.classList.remove('active'));
             document.getElementById('wiz-step-3').classList.add('active');
         }
 
         function wizFinish() {
-            // Push these optimized tasks to the Autopilot Load Balancer
-            finalGroupedTasks.forEach(taskName => {
-                autoScheduleEngine(taskName, 'once');
-            });
-            closeWizard();
-            alert("Success! Your tasks have been load-balanced across the upcoming week!");
+            finalGroupedTasks.forEach(taskName => { autoScheduleEngine(taskName, 'once'); });
+            closeWizard(); alert("Success! Your tasks have been load-balanced across the upcoming week!");
         }
-
 
         // ================= THE AUTOPILOT ENGINE =================
         function getTaskLoadForDate(dateStr, dayOfWeekIndex) {
@@ -492,15 +481,11 @@
 
         function autoScheduleManual(type) {
             let name = document.getElementById('auto-task-name').value.trim();
-            if(!name) return;
-            autoScheduleEngine(name, type);
-            document.getElementById('auto-task-name').value = '';
+            if(!name) return; autoScheduleEngine(name, type); document.getElementById('auto-task-name').value = '';
         }
 
         function autoScheduleEngine(name, type) {
-            if(type === 'daily') {
-                db.dailies.push(name);
-            } 
+            if(type === 'daily') { db.dailies.push(name); } 
             else if(type === 'weekly') {
                 let counts = [0,0,0,0,0,0,0]; db.weeklies.forEach(w => counts[w.dayOfWeek]++);
                 let minDay = counts.indexOf(Math.min(...counts));
@@ -564,11 +549,14 @@
         function addAppt() { let date = document.getElementById('appt-date').value; let time = document.getElementById('appt-time').value; let desc = document.getElementById('appt-desc').value; if(!date||!desc) return; db.appointments.push({date, time, desc}); document.getElementById('appt-desc').value = ''; saveData(); refreshAllLists(); }
         function addMed() { let n = document.getElementById('med-name').value; let t = document.getElementById('med-time').value; if(!n) return; db.medications.push(t ? `${n} (${t})` : n); document.getElementById('med-name').value = ''; document.getElementById('med-time').value = ''; saveData(); refreshAllLists(); }
 
-        // --- 4. PDF GENERATOR MAGIC ---
+        // --- 4. THE REPAIRED PDF GENERATOR ---
         function generatePDF() {
             let btn = document.getElementById("pdf-btn");
             btn.innerText = "⏳ Generating Planner... Please wait!"; btn.style.opacity = "0.7";
-            let dateVal = document.getElementById('print-date').value; let dateParts = dateVal.split('-'); let d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+            
+            let dateVal = document.getElementById('print-date').value; 
+            let dateParts = dateVal.split('-'); 
+            let d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
             
             document.getElementById('pdf-day-title').innerText = dayNames[d.getDay()];
             document.getElementById('pdf-date-title').innerText = `DATE: ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
@@ -576,6 +564,10 @@
             document.getElementById('pdf-notes').innerText = document.getElementById('notes-text').value || " ";
             document.getElementById('pdf-bigtask').innerText = document.getElementById('big-task').value.toUpperCase();
             
+            let chunksHtml = '';
+            document.getElementById('chunk-steps').value.split('\n').forEach(c => { if(c.trim()!="") chunksHtml += `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0;">○ ${c}</p>`; });
+            document.getElementById('pdf-chunks').innerHTML = chunksHtml || '<p style="border-bottom: 1px solid #ccc; padding-bottom:10px;"></p><p style="border-bottom: 1px solid #ccc; padding-bottom:10px;"></p>';
+
             let todosHtml = `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0; font-weight: bold;">○ Bible Reading: ${getReadingString()}</p>`;
             document.querySelectorAll('.med-print-item').forEach(el => { if(el.querySelector('input').checked) { todosHtml += `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0;">○ 💊 ${el.querySelector('.task-name').innerText}</p>`; } });
             document.querySelectorAll('.task-print-item').forEach(el => { if(el.querySelector('input').checked) { todosHtml += `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0;">○ ${el.querySelector('.task-name').innerText.substring(2)}</p>`; } });
@@ -589,9 +581,30 @@
             }
             document.getElementById('pdf-schedule').innerHTML = schedHtml;
 
+            // THE FIX: Move template into the camera's view but hide it behind the background
             let element = document.getElementById('pdf-template');
-            let opt = { margin: 0.5, filename: 'FlockTogether_Planner.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
-            html2pdf().set(opt).from(element).save().then(() => { btn.innerText = "✨ Generate My Planner PDF"; btn.style.opacity = "1"; });
+            element.style.display = 'block';
+            element.style.position = 'absolute';
+            element.style.top = '0px';
+            element.style.left = '0px';
+            element.style.zIndex = '-9999';
+
+            let opt = { 
+                margin: 0.5, 
+                filename: 'FlockTogether_Planner.pdf', 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, scrollY: 0 }, 
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
+            };
+            
+            // Scroll to top so the camera doesn't miss it
+            window.scrollTo(0,0);
+
+            html2pdf().set(opt).from(element).save().then(() => { 
+                element.style.display = 'none';
+                btn.innerText = "✨ Generate My Planner PDF"; 
+                btn.style.opacity = "1"; 
+            });
         }
     </script>
 </body>
