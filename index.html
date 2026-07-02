@@ -19,9 +19,9 @@
         .login-card { background: var(--card-bg); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 320px; }
         .login-card input { width: 90%; padding: 12px; margin: 10px 0 20px 0; border-radius: 8px; border: 1px solid var(--border); font-family: 'Poppins', sans-serif; }
         
-        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; text-align: center; display: inline-block;}
         .btn:hover { opacity: 0.85; transform: translateY(-2px); }
-        .btn-green { background: #48BB78; } .btn-red { background: #E53E3E; } .btn-purple { background: #805AD5; } .btn-gold { background: #D4AF37; }
+        .btn-green { background: #48BB78; } .btn-red { background: #E53E3E; } .btn-purple { background: #805AD5; } .btn-gold { background: #D4AF37; } .btn-dark { background: var(--dark); }
 
         #app-screen { display: none; display: flex; height: 100vh; overflow: hidden; }
         
@@ -35,6 +35,7 @@
         
         .card { background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 10px 20px rgba(160, 174, 192, 0.15); margin-bottom: 25px; }
         .gold-card { border: 2px solid var(--gold); background: #FFF8E7; }
+        .robot-card { border: 2px solid #805AD5; background: #FAF5FF; }
         
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px; color: var(--text); }
@@ -42,15 +43,19 @@
         
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .list-box { border: 1px solid var(--border); background: #F7FAFC; border-radius: 8px; padding: 10px; height: 150px; overflow-y: auto; margin-bottom: 10px; }
-        .list-item { padding: 8px; border-bottom: 1px solid #E2E8F0; font-size: 14px; cursor: pointer; }
+        .list-item { padding: 8px; border-bottom: 1px solid #E2E8F0; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between;}
         .list-item:hover { background: #EDF2F7; }
-        .selected { background: #E2E8F0; font-weight: bold; }
+        
+        .del-btn { color: #E53E3E; font-weight: bold; cursor: pointer; border: none; background: none; }
+        .del-btn:hover { color: #C53030; }
 
         .check-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
         .check-item input { margin-right: 10px; transform: scale(1.2); }
 
-        /* FIXED: Moved off-screen instead of display:none so the PDF Engine can actually read it! */
         #pdf-template { position: absolute; left: -9999px; top: -9999px; width: 800px; padding: 40px; background: white; color: #333; font-family: sans-serif; z-index: -100; }
+        
+        .day-column { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 15px; }
+        .day-column h4 { margin-top: 0; color: var(--primary); text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -58,7 +63,7 @@
     <!-- LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-card">
-            <img src="logo.png" alt="Flock Together Logo" style="width: 120px; height: auto; margin-bottom: 15px;">
+            <img src="logo.png" alt="Flock Together Logo" style="width: 120px; height: auto; margin-bottom: 15px;" onerror="this.style.display='none'">
             <h2 style="margin-top: 0; color: var(--primary);">Flock Together</h2>
             <p style="font-size: 14px; margin-bottom: 25px;">Log in or create a profile</p>
             <input type="text" id="username-input" placeholder="Username...">
@@ -71,7 +76,7 @@
     <div id="app-screen">
         <div class="sidebar">
             <div style="text-align: center; margin-bottom: 40px;">
-                <img src="logo.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 10px;">
+                <img src="logo.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
                 <h2 style="color: var(--primary); margin: 0; font-weight: 800;">Flock Together</h2>
             </div>
             <button class="tab-btn active" onclick="switchTab('dashboard')">📋 Dashboard</button>
@@ -80,7 +85,7 @@
         </div>
 
         <div class="content">
-            <!-- DASHBOARD -->
+            <!-- ================= TAB 1: DASHBOARD ================= -->
             <div id="dashboard" class="tab-content active">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <div>
@@ -92,7 +97,7 @@
 
                 <div class="grid-2" style="margin-bottom: 25px;">
                     <div class="input-group">
-                        <label>Date to Print</label>
+                        <label>Date to Generate</label>
                         <input type="date" id="print-date" onchange="refreshDashboard()">
                     </div>
                     <div class="input-group">
@@ -133,7 +138,7 @@
                         <div id="meds-print-list"></div>
                     </div>
                     <div class="card">
-                        <h3 style="color: #805AD5; margin-top: 0;">🧹 Today's Auto-Schedule</h3>
+                        <h3 style="color: #805AD5; margin-top: 0;">🤖 Algorithm's Plan For Today</h3>
                         <div id="tasks-print-list"></div>
                     </div>
                 </div>
@@ -146,7 +151,7 @@
                 <button id="pdf-btn" class="btn" style="width: 100%; font-size: 20px; padding: 20px; margin-bottom: 50px;" onclick="generatePDF()">✨ Generate My Planner PDF</button>
             </div>
 
-            <!-- APPOINTMENTS -->
+            <!-- ================= TAB 2: APPOINTMENTS ================= -->
             <div id="appointments" class="tab-content">
                 <h1 style="color: var(--dark); margin-bottom: 30px;">Manage Schedule</h1>
                 <div class="grid-2">
@@ -167,40 +172,50 @@
                     </div>
                     <div class="card">
                         <h3 style="margin-top: 0;">Upcoming Schedule</h3>
-                        <div class="list-box" id="appt-listbox"></div>
-                        <button class="btn btn-red" style="width: 100%;" onclick="removeAppt()">Remove Selected</button>
+                        <div id="appt-listbox" style="display:flex; flex-direction:column; gap:5px;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- SETTINGS -->
+            <!-- ================= TAB 3: SETTINGS (THE AUTOPILOT) ================= -->
             <div id="settings" class="tab-content">
-                <h1 style="color: var(--dark); margin-bottom: 30px;">Master Settings</h1>
+                <h1 style="color: var(--dark); margin-bottom: 30px;">Master Settings & Backlog</h1>
+                
                 <div class="grid-2">
-                    <div class="card">
-                        <h3 style="color: #3182CE; margin-top: 0;">Health & Medications</h3>
-                        <div class="input-group"><label>Name:</label><input type="text" id="med-name"></div>
-                        <div class="input-group"><label>Time/Dose:</label><input type="text" id="med-time"></div>
-                        <button class="btn" style="background:#3182CE; margin-bottom: 15px;" onclick="addMed()">Add Medication</button>
-                        <div class="list-box" id="meds-listbox"></div>
-                        <button class="btn btn-red" style="width: 100%;" onclick="removeMed()">Remove Selected</button>
+                    <!-- THE NEW ALGORITHM BOX -->
+                    <div class="card robot-card">
+                        <h3 style="color: #805AD5; margin-top: 0;">🤖 Autopilot Scheduler</h3>
+                        <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Dump your tasks here. The algorithm will automatically load-balance your week so you never get overwhelmed.</p>
+                        <div class="input-group">
+                            <input type="text" id="auto-task-name" placeholder="E.g., Wash the car, Do laundry..." style="font-size: 16px; padding: 15px;">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-purple" style="flex: 1;" onclick="autoSchedule('daily')">Every Day</button>
+                            <button class="btn btn-dark" style="flex: 1;" onclick="autoSchedule('weekly')">Once a Week</button>
+                            <button class="btn" style="flex: 1; background: #4A5568;" onclick="autoSchedule('once')">Just Once</button>
+                        </div>
                     </div>
 
                     <div class="card">
-                        <h3 style="color: #805AD5; margin-top: 0;">Smart Auto-Schedule</h3>
-                        <div class="input-group"><label>Task Name:</label><input type="text" id="task-name"></div>
+                        <h3 style="color: #3182CE; margin-top: 0;">💊 Health & Medications</h3>
                         <div class="grid-2">
-                            <div class="input-group"><label>Frequency:</label><select id="task-freq"><option>Daily</option><option>Weekly</option><option>Monthly (1st)</option></select></div>
-                            <div class="input-group"><label>Day (If Weekly):</label><select id="task-day"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select></div>
+                            <div class="input-group"><label>Name:</label><input type="text" id="med-name"></div>
+                            <div class="input-group"><label>Time/Dose:</label><input type="text" id="med-time"></div>
                         </div>
-                        <div class="input-group">
-                            <label>Priority Level:</label>
-                            <select id="task-prio"><option value="1">🔥 High (Must Do)</option><option value="2">⚡ Normal (Should Do)</option><option value="3">☁️ Low (Bonus)</option></select>
-                        </div>
-                        <button class="btn btn-purple" style="margin-bottom: 15px;" onclick="addSmartTask()">Add Smart Task</button>
-                        <div class="list-box" id="tasks-listbox"></div>
-                        <button class="btn btn-red" style="width: 100%;" onclick="removeSmartTask()">Remove Selected</button>
+                        <button class="btn" style="background:#3182CE; margin-bottom: 15px;" onclick="addMed()">Add Medication</button>
+                        <div id="meds-listbox" style="display:flex; flex-direction:column; gap:5px;"></div>
                     </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-top: 0; color: var(--dark);">📅 The Week Ahead (Algorithm Overview)</h3>
+                    <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Here is how the robot balanced your week. Dailies run every day automatically.</p>
+                    <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px;" id="weekly-overview">
+                        <!-- JS WILL INJECT THE 7 DAYS HERE -->
+                    </div>
+                    
+                    <h4 style="margin-top: 20px; color: var(--dark);">🔄 Daily Routines</h4>
+                    <div id="dailies-listbox" style="display:flex; flex-direction:column; gap:5px; background: #F7FAFC; padding: 10px; border-radius: 8px;"></div>
                 </div>
             </div>
 
@@ -211,7 +226,7 @@
     <div id="pdf-template">
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #007BFF; padding-bottom: 10px; margin-bottom: 20px;">
             <div style="display: flex; align-items: center; gap: 15px;">
-                <img src="logo.png" style="height: 50px; width: auto;">
+                <img src="logo.png" style="height: 50px; width: auto;" onerror="this.style.display='none'">
                 <h1 style="color: #007BFF; margin: 0;">Flock <span style="color: #FFD700; font-style: italic;">Together</span></h1>
             </div>
             <div style="text-align: right;">
@@ -258,29 +273,38 @@
     </div>
 
 
+    <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
-        let db = JSON.parse(localStorage.getItem("flockData")) || {
+        // THE NEW UPGRADED DATABASE STRUCTURE
+        let db = JSON.parse(localStorage.getItem("flockData_v7")) || {
             username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0,
             appointments: [], medications: ["Vyvanse (9 am)", "Vitamin D (Weekly)"],
-            smartTasks: [
-                { name: "Morning Bible Study", freq: "Daily", day: "Monday", priority: 1 },
-                { name: "Make the bed", freq: "Daily", day: "Monday", priority: 2 }
-            ]
+            // The New Autopilot Lists
+            dailies: ["Make the bed", "Read Bible"], 
+            weeklies: [], // { name, dayOfWeek: 0-6 }
+            oneOffs: []   // { name, dateStr: "2026-07-02" }
         };
 
-        let selAppt = -1, selMed = -1, selTask = -1;
+        const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
         const bibleBooks = ["Genesis,50", "Exodus,40", "Leviticus,27", "Numbers,36", "Deuteronomy,34", "Joshua,24", "Judges,21", "Ruth,4", "1 Samuel,31", "2 Samuel,24", "1 Kings,22", "2 Kings,25", "1 Chronicles,29", "2 Chronicles,36", "Ezra,10", "Nehemiah,13", "Esther,10", "Job,42", "Psalms,150", "Proverbs,31", "Ecclesiastes,12", "Song of Solomon,8", "Isaiah,66", "Jeremiah,52", "Lamentations,5", "Ezekiel,48", "Daniel,12", "Hosea,14", "Joel,3", "Amos,9", "Obadiah,1", "Jonah,4", "Micah,7", "Nahum,3", "Habakkuk,3", "Zephaniah,3", "Haggai,2", "Zechariah,14", "Malachi,4", "Matthew,28", "Mark,16", "Luke,24", "John,21", "Acts,28", "Romans,16", "1 Corinthians,16", "2 Corinthians,13", "Galatians,6", "Ephesians,6", "Philippians,4", "Colossians,4", "1 Thessalonians,5", "2 Thessalonians,3", "1 Timothy,6", "2 Timothy,4", "Titus,3", "Philemon,1", "Hebrews,13", "James,5", "1 Peter,5", "2 Peter,3", "1 John,5", "2 John,3", "3 John,1", "Jude,1", "Revelation,22"];
         let allChapters = [];
         bibleBooks.forEach(b => { let p = b.split(','); for(let i=1; i<=parseInt(p[1]); i++) allChapters.push(`${p[0]} ${i}`); });
+
+        // HELPER: Get correct local date string (YYYY-MM-DD)
+        function getLocalDateStr(d) {
+            let offset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - offset).toISOString().split('T')[0];
+        }
 
         window.onload = () => {
             document.getElementById('print-date').valueAsDate = new Date();
             if (db.username !== "") { document.getElementById('login-screen').style.display = 'none'; startApp(); }
         };
 
-        function saveData() { localStorage.setItem("flockData", JSON.stringify(db)); }
+        function saveData() { localStorage.setItem("flockData_v7", JSON.stringify(db)); }
 
         function login() {
             let u = document.getElementById("username-input").value.trim();
@@ -352,59 +376,135 @@
             } catch(e) { document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; }
         }
 
+
+        // ================= THE AUTOPILOT ENGINE =================
+        function getTaskLoadForDate(dateStr, dayOfWeekIndex) {
+            let wCount = db.weeklies.filter(w => w.dayOfWeek === dayOfWeekIndex).length;
+            let oCount = db.oneOffs.filter(o => o.dateStr === dateStr).length;
+            return wCount + oCount;
+        }
+
+        function autoSchedule(type) {
+            let name = document.getElementById('auto-task-name').value.trim();
+            if(!name) return;
+
+            if(type === 'daily') {
+                db.dailies.push(name);
+            } 
+            else if(type === 'weekly') {
+                // Find day of week (0-6) with the fewest weekly tasks
+                let counts = [0,0,0,0,0,0,0];
+                db.weeklies.forEach(w => counts[w.dayOfWeek]++);
+                let minDay = counts.indexOf(Math.min(...counts));
+                db.weeklies.push({ name: name, dayOfWeek: minDay });
+            } 
+            else if(type === 'once') {
+                // Find the lightest day in the next 7 days
+                let lowestCount = 999; let bestDate = null;
+                for(let i=0; i<7; i++) {
+                    let d = new Date(); d.setDate(d.getDate() + i);
+                    let dateStr = getLocalDateStr(d);
+                    let count = getTaskLoadForDate(dateStr, d.getDay());
+                    if(count < lowestCount) { lowestCount = count; bestDate = dateStr; }
+                }
+                db.oneOffs.push({ name: name, dateStr: bestDate });
+            }
+
+            document.getElementById('auto-task-name').value = '';
+            saveData(); refreshAllLists();
+        }
+
+        // ================= REFRESH UI =================
         function refreshAllLists() {
+            // Appts
             let al = document.getElementById('appt-listbox'); al.innerHTML = '';
             db.appointments.forEach((a, i) => {
-                let div = document.createElement('div'); div.className = 'list-item'; div.innerText = `${a.date} @ ${a.time} - ${a.desc}`;
-                div.onclick = () => { document.querySelectorAll('#appt-listbox .list-item').forEach(el=>el.classList.remove('selected')); div.classList.add('selected'); selAppt = i; }; al.appendChild(div);
+                al.innerHTML += `<div class="list-item"><span>${a.date} @ ${a.time} - ${a.desc}</span> <button class="del-btn" onclick="delAppt(${i})">X</button></div>`;
             });
+            // Meds
             let ml = document.getElementById('meds-listbox'); ml.innerHTML = '';
             db.medications.forEach((m, i) => {
-                let div = document.createElement('div'); div.className = 'list-item'; div.innerText = m;
-                div.onclick = () => { document.querySelectorAll('#meds-listbox .list-item').forEach(el=>el.classList.remove('selected')); div.classList.add('selected'); selMed = i; }; ml.appendChild(div);
+                ml.innerHTML += `<div class="list-item"><span>${m}</span> <button class="del-btn" onclick="delMed(${i})">X</button></div>`;
             });
-            let tl = document.getElementById('tasks-listbox'); tl.innerHTML = '';
-            db.smartTasks.forEach((t, i) => {
-                let p = t.priority==1?"High":t.priority==2?"Normal":"Low"; let freq = t.freq=="Weekly"?`Weekly (${t.day})`:t.freq;
-                let div = document.createElement('div'); div.className = 'list-item'; div.innerText = `[${freq}] ${t.name} (Pri: ${p})`;
-                div.onclick = () => { document.querySelectorAll('#tasks-listbox .list-item').forEach(el=>el.classList.remove('selected')); div.classList.add('selected'); selTask = i; }; tl.appendChild(div);
+            
+            // Dailies
+            let dl = document.getElementById('dailies-listbox'); dl.innerHTML = '';
+            db.dailies.forEach((d, i) => {
+                dl.innerHTML += `<div class="list-item" style="background:white;"><span>${d}</span> <button class="del-btn" onclick="delDaily(${i})">X</button></div>`;
             });
+
+            // Weekly Overview Grid
+            let wg = document.getElementById('weekly-overview'); wg.innerHTML = '';
+            for(let i=0; i<7; i++) {
+                let d = new Date(); d.setDate(d.getDate() + i);
+                let dateStr = getLocalDateStr(d); let dayIdx = d.getDay();
+                
+                let dayHtml = `<div class="day-column" style="min-width: 150px; flex:1;"><h4>${i===0 ? "Today" : dayNames[dayIdx]}</h4>`;
+                
+                // Add Weeklies
+                db.weeklies.forEach((w, idx) => {
+                    if(w.dayOfWeek === dayIdx) {
+                        dayHtml += `<div style="font-size:12px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:5px; display:flex; justify-content:space-between;"><span>${w.name}</span><button class="del-btn" onclick="delWeekly(${idx})">X</button></div>`;
+                    }
+                });
+
+                // Add One-Offs
+                db.oneOffs.forEach((o, idx) => {
+                    if(o.dateStr === dateStr) {
+                        dayHtml += `<div style="font-size:12px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:5px; display:flex; justify-content:space-between; color:#805AD5;"><span>${o.name}</span><button class="del-btn" onclick="delOneOff(${idx})">X</button></div>`;
+                    }
+                });
+
+                dayHtml += `</div>`;
+                wg.innerHTML += dayHtml;
+            }
+
             refreshDashboard();
         }
 
         function refreshDashboard() {
             let dateStr = document.getElementById('print-date').value; if(!dateStr) return;
-            let d = new Date(dateStr + 'T12:00:00Z'); let days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; let dayName = days[d.getUTCDay()];
-            let isFirst = d.getUTCDate() === 1;
+            
+            // Create a proper local date object to avoid timezone shift
+            let dateParts = dateStr.split('-');
+            let d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); 
+            let dayIdx = d.getDay();
 
+            // Meds
             let mList = document.getElementById('meds-print-list'); mList.innerHTML = '';
             db.medications.forEach(m => { mList.innerHTML += `<div class="check-item med-print-item"><input type="checkbox" checked> <span class="task-name">${m}</span></div>`; });
 
+            // Tasks (Dailies + Assgined Weeklies + Assigned One-Offs)
             let tList = document.getElementById('tasks-print-list'); tList.innerHTML = '';
-            let todaysTasks = db.smartTasks.filter(t => t.freq === "Daily" || (t.freq === "Weekly" && t.day === dayName) || (t.freq === "Monthly (1st)" && isFirst)).sort((a,b) => a.priority - b.priority);
-            todaysTasks.forEach(t => {
-                let icon = t.priority==1?"🔥":t.priority==2?"⚡":"☁️";
-                tList.innerHTML += `<div class="check-item task-print-item"><input type="checkbox" checked> <span class="task-name">${icon} ${t.name}</span></div>`;
-            });
+            
+            db.dailies.forEach(t => tList.innerHTML += `<div class="check-item task-print-item"><input type="checkbox" checked> <span class="task-name">🔄 ${t}</span></div>`);
+            db.weeklies.filter(w => w.dayOfWeek === dayIdx).forEach(t => tList.innerHTML += `<div class="check-item task-print-item"><input type="checkbox" checked> <span class="task-name">📅 ${t.name}</span></div>`);
+            db.oneOffs.filter(o => o.dateStr === dateStr).forEach(t => tList.innerHTML += `<div class="check-item task-print-item"><input type="checkbox" checked> <span class="task-name">🎯 ${t.name}</span></div>`);
         }
 
-        function addAppt() { let date = document.getElementById('appt-date').value; let time = document.getElementById('appt-time').value; let desc = document.getElementById('appt-desc').value; if(!date || !desc) return; db.appointments.push({date, time, desc}); document.getElementById('appt-desc').value = ''; saveData(); refreshAllLists(); }
-        function removeAppt() { if(selAppt>-1){ db.appointments.splice(selAppt,1); selAppt=-1; saveData(); refreshAllLists(); } }
-        function addMed() { let n = document.getElementById('med-name').value; let t = document.getElementById('med-time').value; if(!n) return; db.medications.push(t ? `${n} (${t})` : n); document.getElementById('med-name').value = ''; document.getElementById('med-time').value = ''; saveData(); refreshAllLists(); }
-        function removeMed() { if(selMed>-1){ db.medications.splice(selMed,1); selMed=-1; saveData(); refreshAllLists(); } }
-        function addSmartTask() { let n = document.getElementById('task-name').value; let f = document.getElementById('task-freq').value; let d = document.getElementById('task-day').value; let p = parseInt(document.getElementById('task-prio').value); if(!n) return; db.smartTasks.push({name:n, freq:f, day:d, priority:p}); document.getElementById('task-name').value=''; saveData(); refreshAllLists(); }
-        function removeSmartTask() { if(selTask>-1){ db.smartTasks.splice(selTask,1); selTask=-1; saveData(); refreshAllLists(); } }
+        // DELETE FUNCTIONS
+        function delAppt(i) { db.appointments.splice(i,1); saveData(); refreshAllLists(); }
+        function delMed(i) { db.medications.splice(i,1); saveData(); refreshAllLists(); }
+        function delDaily(i) { db.dailies.splice(i,1); saveData(); refreshAllLists(); }
+        function delWeekly(i) { db.weeklies.splice(i,1); saveData(); refreshAllLists(); }
+        function delOneOff(i) { db.oneOffs.splice(i,1); saveData(); refreshAllLists(); }
 
+        function addAppt() { let date = document.getElementById('appt-date').value; let time = document.getElementById('appt-time').value; let desc = document.getElementById('appt-desc').value; if(!date || !desc) return; db.appointments.push({date, time, desc}); document.getElementById('appt-desc').value = ''; saveData(); refreshAllLists(); }
+        function addMed() { let n = document.getElementById('med-name').value; let t = document.getElementById('med-time').value; if(!n) return; db.medications.push(t ? `${n} (${t})` : n); document.getElementById('med-name').value = ''; document.getElementById('med-time').value = ''; saveData(); refreshAllLists(); }
+
+
+        // --- 4. PDF GENERATOR MAGIC ---
         function generatePDF() {
             let btn = document.getElementById("pdf-btn");
             btn.innerText = "⏳ Generating Planner... Please wait!";
             btn.style.opacity = "0.7";
 
             let dateVal = document.getElementById('print-date').value;
-            let d = new Date(dateVal + 'T12:00:00Z'); let days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            let dateParts = dateVal.split('-');
+            let d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
             
-            document.getElementById('pdf-day-title').innerText = days[d.getUTCDay()];
-            document.getElementById('pdf-date-title').innerText = `DATE: ${d.getUTCMonth()+1}/${d.getUTCDate()}/${d.getUTCFullYear()}`;
+            document.getElementById('pdf-day-title').innerText = dayNames[d.getDay()];
+            document.getElementById('pdf-date-title').innerText = `DATE: ${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
             document.getElementById('pdf-verse').innerText = document.getElementById('verse-text').innerText;
             document.getElementById('pdf-notes').innerText = document.getElementById('notes-text').value || " ";
             document.getElementById('pdf-bigtask').innerText = document.getElementById('big-task').value.toUpperCase();
@@ -415,14 +515,11 @@
 
             let todosHtml = `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0; font-weight: bold;">○ Bible Reading: ${getReadingString()}</p>`;
             
-            // Add Medications to PDF To-Do list
             document.querySelectorAll('.med-print-item').forEach(el => {
                 if(el.querySelector('input').checked) { todosHtml += `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0;">○ 💊 ${el.querySelector('.task-name').innerText}</p>`; }
             });
-
-            // Add Tasks to PDF To-Do list
             document.querySelectorAll('.task-print-item').forEach(el => {
-                if(el.querySelector('input').checked) { todosHtml += `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0;">○ ${el.querySelector('.task-name').innerText}</p>`; }
+                if(el.querySelector('input').checked) { todosHtml += `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0;">○ ${el.querySelector('.task-name').innerText.substring(2)}</p>`; }
             });
             document.getElementById('pdf-todos').innerHTML = todosHtml;
 
