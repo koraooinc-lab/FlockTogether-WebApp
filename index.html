@@ -490,9 +490,15 @@
                 if(el.querySelector('input').checked) selfCareItems.push(el.querySelector('.task-name').innerText);
             });
 
+            // Setup Task List with Emoji-Stripping to prevent PDF mojibake
             let todos = [`Bible Reading: ${reading}`];
             document.querySelectorAll('.task-print-item').forEach(el => { 
-                if(el.querySelector('input').checked) todos.push(el.querySelector('.task-name').innerText.replace(/^[🔄📅🎯]\s*/, ''));
+                if(el.querySelector('input').checked) {
+                    let rawText = el.querySelector('.task-name').innerText;
+                    // Keep only standard printable ASCII characters (strips emojis and strange symbols)
+                    let cleanText = rawText.replace(/[^\x20-\x7E]/g, '').trim(); 
+                    todos.push(cleanText);
+                }
             });
 
             let todaysAppts = db.appointments.filter(a => a.date === dateVal);
@@ -689,17 +695,26 @@
                 mY += 30;
             });
 
-            // --- 8. RIGHT COLUMN: TO DO LIST ---
+            // --- 8. RIGHT COLUMN: TASK LIST (With Text Wrapping) ---
             let tdY = drawBox("TASK LIST", 240, 310, 332, 250);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+            
             todos.forEach(t => {
+                // Wrap text so long lists don't spill off the edge
+                let wrappedTask = doc.splitTextToSize(t, 290);
+                
                 drawCheck(250, tdY);
-                doc.text(t, 268, tdY);
+                doc.text(wrappedTask, 268, tdY);
+                
+                // Calculate extra height needed if the text took multiple lines
+                let lineSpacing = (wrappedTask.length - 1) * 12;
+                
                 doc.setDrawColor(230, 230, 230);
-                doc.line(250, tdY + 6, 558, tdY + 6);
-                tdY += 22;
+                doc.line(250, tdY + 6 + lineSpacing, 558, tdY + 6 + lineSpacing);
+                
+                tdY += 22 + lineSpacing; // Move down for the next task
             });
 
             // --- 9. RIGHT COLUMN: BRAIN DUMP ---
@@ -720,4 +735,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
