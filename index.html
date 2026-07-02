@@ -5,230 +5,512 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flock Together Planner</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <!-- This library allows the browser to create and download PDFs! -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         :root {
-            --primary: #0096FF;
-            --gold: #FFD700;
-            --dark: #2D3748;
-            --bg: #F0F8FF;
-            --card-bg: #FFFFFF;
+            --primary: #0096FF; --gold: #FFD700; --dark: #2D3748; --bg: #F0F8FF; --card-bg: #FFFFFF;
+            --text: #4A5568; --border: #E2E8F0;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            padding: 0;
-            color: #333;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            max-width: 800px;
-            width: 100%;
-            padding: 20px;
-        }
-
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
+        
         /* LOGIN SCREEN */
-        #login-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); display: flex; align-items: center; justify-content: center;
-            z-index: 100;
-        }
-        .login-card {
-            background: var(--card-bg); padding: 40px; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 300px;
-        }
-        .login-card input {
-            width: 90%; padding: 12px; margin: 10px 0 20px 0; border-radius: 8px;
-            border: 1px solid #ddd; font-family: 'Poppins', sans-serif;
-        }
-        .btn {
-            background: var(--primary); color: white; border: none; padding: 12px 20px;
-            border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px;
-        }
-        .btn-green { background: #48BB78; }
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .login-card { background: var(--card-bg); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 320px; }
+        .login-card input { width: 90%; padding: 12px; margin: 10px 0 20px 0; border-radius: 8px; border: 1px solid var(--border); font-family: 'Poppins', sans-serif; }
         
-        /* DASHBOARD */
-        #app-screen { display: none; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .streak-badge { background: #FFF3CD; color: #856404; padding: 8px 15px; border-radius: 12px; font-weight: bold; }
+        /* BUTTONS */
+        .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn:hover { opacity: 0.85; transform: translateY(-2px); }
+        .btn-green { background: #48BB78; } .btn-red { background: #E53E3E; } .btn-purple { background: #805AD5; } .btn-gold { background: #D4AF37; }
+
+        /* MAIN LAYOUT */
+        #app-screen { display: none; display: flex; height: 100vh; overflow: hidden; }
         
-        .card {
-            background: var(--card-bg); padding: 25px; border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px;
-        }
+        /* SIDEBAR TABS */
+        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border); padding: 30px 15px; }
+        .tab-btn { display: block; width: 100%; text-align: left; background: transparent; color: #718096; border: none; padding: 15px; font-size: 16px; font-weight: 600; font-family: 'Poppins'; border-radius: 10px; cursor: pointer; margin-bottom: 5px; }
+        .tab-btn.active { background: #E6F2FF; color: var(--primary); }
+        
+        /* MAIN CONTENT AREA */
+        .content { flex: 1; padding: 40px; overflow-y: auto; }
+        .tab-content { display: none; max-width: 900px; margin: 0 auto; }
+        .tab-content.active { display: block; }
+        
+        /* CARDS & INPUTS */
+        .card { background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 10px 20px rgba(160, 174, 192, 0.15); margin-bottom: 25px; }
         .gold-card { border: 2px solid var(--gold); background: #FFF8E7; }
         
-        h2 { margin-top: 0; color: var(--primary); }
-        .gold-text { color: #D4AF37; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 14px; color: var(--text); }
+        .input-group input, .input-group select, .input-group textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #F7FAFC; font-family: 'Poppins'; font-size: 14px; box-sizing: border-box; }
+        
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .list-box { border: 1px solid var(--border); background: #F7FAFC; border-radius: 8px; padding: 10px; height: 150px; overflow-y: auto; margin-bottom: 10px; }
+        .list-item { padding: 8px; border-bottom: 1px solid #E2E8F0; font-size: 14px; cursor: pointer; }
+        .list-item:hover { background: #EDF2F7; }
+        .selected { background: #E2E8F0; font-weight: bold; }
 
-        .verse-box { font-style: italic; color: #4A5568; margin: 15px 0; }
-        .reading-box { font-size: 24px; font-weight: 800; color: var(--dark); margin: 10px 0; text-align: center; }
+        /* CHECKBOXES FOR PRINT LIST */
+        .check-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
+        .check-item input { margin-right: 10px; transform: scale(1.2); }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+        /* HIDDEN PDF TEMPLATE */
+        #pdf-template { display: none; width: 800px; padding: 40px; background: white; color: #333; font-family: sans-serif; }
     </style>
 </head>
 <body>
 
-    <!-- LOGIN SCREEN -->
+    <!-- 1. LOGIN SCREEN -->
     <div id="login-screen">
         <div class="login-card">
-            <h2 style="margin-bottom: 5px;">Flock Together</h2>
-            <p style="font-size: 12px; color: #777; margin-bottom: 20px;">Enter a username to continue</p>
+            <h2 style="margin-top: 0; color: var(--primary);">Flock Together</h2>
+            <p style="font-size: 14px; margin-bottom: 25px;">Log in or create a profile</p>
             <input type="text" id="username-input" placeholder="Username...">
-            <button class="btn" onclick="login()">Enter the Hub</button>
+            <input type="password" id="password-input" placeholder="Password...">
+            <button class="btn" style="width: 100%;" onclick="login()">Enter the Hub</button>
         </div>
     </div>
 
-    <!-- MAIN APP DASHBOARD -->
-    <div id="app-screen" class="container">
+    <!-- 2. MAIN APP -->
+    <div id="app-screen">
         
-        <div class="header">
-            <div>
-                <h1 id="welcome-text" style="margin: 0; color: var(--dark);">Good Morning!</h1>
-                <p style="margin: 0; color: #718096;">Let's make today manageable.</p>
+        <!-- SIDEBAR TABS -->
+        <div class="sidebar">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <h2 style="color: var(--primary); margin: 0; font-weight: 800;">Flock Together</h2>
             </div>
-            <div class="streak-badge" id="streak-badge">🔥 1 Day Streak!</div>
+            <button class="tab-btn active" onclick="switchTab('dashboard')">📋 Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('appointments')">📅 Appointments</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
         </div>
 
-        <div class="card gold-card grid">
-            <div>
-                <h3 class="gold-text" style="margin-top:0;">📖 Verse of the Day</h3>
-                <div id="verse-text" class="verse-box">Loading the Word...</div>
-                <button class="btn" style="background:#D4AF37; width: auto;" onclick="fetchVerse()">Draw New Verse</button>
-            </div>
-            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                <h3 class="gold-text" style="margin:0;">📚 Today's Reading</h3>
-                <div id="reading-text" class="reading-box">Genesis 1-4</div>
-                <button class="btn btn-green" onclick="advanceReading()">Mark Read & Advance</button>
-            </div>
-        </div>
+        <!-- CONTENT AREA -->
+        <div class="content">
+            
+            <!-- ================= TAB 1: DASHBOARD ================= -->
+            <div id="dashboard" class="tab-content active">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <div>
+                        <h1 id="welcome-text" style="margin: 0; color: var(--dark); font-size: 32px;">Good Morning!</h1>
+                        <p style="margin: 0;">Let's make today manageable.</p>
+                    </div>
+                    <div style="background: #FFF3CD; color: #856404; padding: 10px 20px; border-radius: 12px; font-weight: bold; font-size: 16px;" id="streak-badge">🔥 1 Day Streak!</div>
+                </div>
 
-        <div class="card">
-            <h2>🧹 Daily Auto-Schedule</h2>
-            <div style="margin-bottom: 10px;">
-                <input type="checkbox" checked> 🔥 Morning Bible Study
-            </div>
-            <div style="margin-bottom: 10px;">
-                <input type="checkbox" checked> ⚡ Make the bed
-            </div>
-            <div style="margin-bottom: 10px;">
-                <input type="checkbox" checked> 💊 Take Medications
-            </div>
-        </div>
+                <div class="grid-2" style="margin-bottom: 25px;">
+                    <div class="input-group">
+                        <label>Date to Print</label>
+                        <input type="date" id="print-date" onchange="refreshDashboard()">
+                    </div>
+                    <div class="input-group">
+                        <label>Print Theme</label>
+                        <select id="print-theme">
+                            <option value="yaweh">Flock of Yaweh (Blue & Gold)</option>
+                            <option value="ocean">Pastel Ocean (Purple)</option>
+                            <option value="minimal">Minimalist Elegance (Black)</option>
+                        </select>
+                    </div>
+                </div>
 
+                <!-- VERSE & READING -->
+                <div class="card gold-card grid-2">
+                    <div>
+                        <h3 style="color: #D4AF37; margin-top: 0;">📖 Verse of the Day</h3>
+                        <p id="verse-text" style="font-style: italic; font-size: 14px;">Loading the Word...</p>
+                        <button class="btn btn-gold" onclick="fetchVerse()">Draw a New Verse</button>
+                    </div>
+                    <div style="text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                        <h3 style="color: #D4AF37; margin-top: 0;">📚 Today's Reading</h3>
+                        <h2 id="reading-text" style="color: var(--dark); margin: 5px 0 15px 0;">Genesis 1-4</h2>
+                        <button class="btn btn-green" onclick="advanceReading()">Mark Read & Advance</button>
+                    </div>
+                </div>
+
+                <!-- TASK DEFROSTER -->
+                <div class="card">
+                    <h3 style="color: var(--primary); margin-top: 0;">🧩 Task Defroster</h3>
+                    <p style="font-size: 14px; margin-bottom: 15px;">Break one overwhelming task into tiny, 5-minute steps.</p>
+                    <div class="grid-2">
+                        <div class="input-group"><label>The Overwhelming Task:</label><textarea id="big-task" rows="3"></textarea></div>
+                        <div class="input-group"><label>Tiny Steps (One per line):</label><textarea id="chunk-steps" rows="3"></textarea></div>
+                    </div>
+                </div>
+
+                <!-- DAILY CHECKLISTS -->
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 style="color: #3182CE; margin-top: 0;">💊 Health & Meds</h3>
+                        <div id="meds-print-list"></div>
+                    </div>
+                    <div class="card">
+                        <h3 style="color: #805AD5; margin-top: 0;">🧹 Today's Auto-Schedule</h3>
+                        <div id="tasks-print-list"></div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Brain Dump (Prints on PDF):</label>
+                    <textarea id="notes-text" rows="3" style="background: white;"></textarea>
+                </div>
+
+                <button class="btn" style="width: 100%; font-size: 20px; padding: 20px; margin-bottom: 50px;" onclick="generatePDF()">✨ Generate My Planner PDF</button>
+            </div>
+
+            <!-- ================= TAB 2: APPOINTMENTS ================= -->
+            <div id="appointments" class="tab-content">
+                <h1 style="color: var(--dark); margin-bottom: 30px;">Manage Schedule</h1>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 style="color: var(--primary); margin-top: 0;">New Appointment</h3>
+                        <div class="input-group"><label>Date:</label><input type="date" id="appt-date"></div>
+                        <div class="input-group">
+                            <label>Time:</label>
+                            <select id="appt-time">
+                                <option>06:00 AM</option><option>07:00 AM</option><option>08:00 AM</option><option>09:00 AM</option>
+                                <option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>01:00 PM</option>
+                                <option>02:00 PM</option><option>03:00 PM</option><option>04:00 PM</option><option>05:00 PM</option>
+                                <option>06:00 PM</option><option>07:00 PM</option><option>08:00 PM</option><option>09:00 PM</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Details:</label><input type="text" id="appt-desc"></div>
+                        <button class="btn" onclick="addAppt()">Save Appointment</button>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin-top: 0;">Upcoming Schedule</h3>
+                        <div class="list-box" id="appt-listbox"></div>
+                        <button class="btn btn-red" style="width: 100%;" onclick="removeAppt()">Remove Selected</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 3: SETTINGS ================= -->
+            <div id="settings" class="tab-content">
+                <h1 style="color: var(--dark); margin-bottom: 30px;">Master Settings</h1>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3 style="color: #3182CE; margin-top: 0;">Health & Medications</h3>
+                        <div class="input-group"><label>Name:</label><input type="text" id="med-name"></div>
+                        <div class="input-group"><label>Time/Dose:</label><input type="text" id="med-time"></div>
+                        <button class="btn" style="background:#3182CE; margin-bottom: 15px;" onclick="addMed()">Add Medication</button>
+                        <div class="list-box" id="meds-listbox"></div>
+                        <button class="btn btn-red" style="width: 100%;" onclick="removeMed()">Remove Selected</button>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="color: #805AD5; margin-top: 0;">Smart Auto-Schedule</h3>
+                        <div class="input-group"><label>Task Name:</label><input type="text" id="task-name"></div>
+                        <div class="grid-2">
+                            <div class="input-group">
+                                <label>Frequency:</label>
+                                <select id="task-freq"><option>Daily</option><option>Weekly</option><option>Monthly (1st)</option></select>
+                            </div>
+                            <div class="input-group">
+                                <label>Day (If Weekly):</label>
+                                <select id="task-day"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option></select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Priority Level:</label>
+                            <select id="task-prio"><option value="1">🔥 High (Must Do)</option><option value="2">⚡ Normal (Should Do)</option><option value="3">☁️ Low (Bonus)</option></select>
+                        </div>
+                        <button class="btn btn-purple" style="margin-bottom: 15px;" onclick="addSmartTask()">Add Smart Task</button>
+                        <div class="list-box" id="tasks-listbox"></div>
+                        <button class="btn btn-red" style="width: 100%;" onclick="removeSmartTask()">Remove Selected</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 
-    <!-- APP LOGIC (JAVASCRIPT) -->
+    <!-- HIDDEN HTML TEMPLATE FOR PDF GENERATION -->
+    <div id="pdf-template">
+        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #007BFF; padding-bottom: 10px; margin-bottom: 20px;">
+            <h1 style="color: #007BFF; margin: 0;">Flock <span style="color: #FFD700; font-style: italic;">Together</span></h1>
+            <div style="text-align: right;">
+                <h3 id="pdf-day-title" style="margin: 0; color: #007BFF;">Monday</h3>
+                <p id="pdf-date-title" style="margin: 0; color: #555;">DATE: 01/01/24</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <!-- Left Col (Schedule) -->
+            <div style="width: 35%;">
+                <div style="background: #F5FAFF; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h3 style="color: #007BFF; text-align: center; margin-top: 0;">SCHEDULE ⏱</h3>
+                    <div id="pdf-schedule" style="font-size: 12px; line-height: 1.8;"></div>
+                </div>
+                <div style="background: #F5FAFF; padding: 15px; border-radius: 10px;">
+                    <h3 style="color: #007BFF; text-align: center; margin-top: 0;">MEAL PLAN 🍴</h3>
+                    <p style="border-bottom: 1px solid #ccc; padding-bottom: 5px;"><strong>B</strong></p>
+                    <p style="border-bottom: 1px solid #ccc; padding-bottom: 5px;"><strong>L</strong></p>
+                    <p style="border-bottom: 1px solid #ccc; padding-bottom: 5px;"><strong>D</strong></p>
+                    <p style="border-bottom: 1px solid #ccc; padding-bottom: 5px;"><strong>S</strong></p>
+                </div>
+            </div>
+
+            <!-- Right Col (Tasks) -->
+            <div style="width: 65%;">
+                <div style="background: #FFF8E7; border: 2px solid #FFD700; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
+                    <h3 style="color: #D4AF37; margin-top: 0;">📖 VERSE OF THE DAY</h3>
+                    <p id="pdf-verse" style="font-style: italic; font-size: 12px; margin: 0;"></p>
+                </div>
+                <div style="background: #F5FAFF; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h3 style="color: #007BFF; text-align: center; margin-top: 0;">🎯 TOP PRIORITY</h3>
+                    <h4 id="pdf-bigtask" style="text-align: center; color: #FFD700; margin: 5px 0;"></h4>
+                    <div id="pdf-chunks" style="font-size: 12px; line-height: 1.8;"></div>
+                </div>
+                <div style="background: #F5FAFF; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h3 style="color: #007BFF; text-align: center; margin-top: 0;">TO-DO LIST 📝</h3>
+                    <p id="pdf-reading" style="font-size: 12px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin:0;"></p>
+                    <div id="pdf-todos" style="font-size: 12px; line-height: 1.8;"></div>
+                </div>
+                <div style="background: #F5FAFF; padding: 15px; border-radius: 10px;">
+                    <h3 style="color: #007BFF; text-align: center; margin-top: 0;">BRAIN DUMP 🧠</h3>
+                    <p id="pdf-notes" style="font-size: 12px; min-height: 40px;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
-        // 1. Data Setup (Using Browser LocalStorage instead of a JSON file!)
-        let userData = JSON.parse(localStorage.getItem("flockData")) || {
-            username: "", streakDays: 0, lastOpened: "", readingIndex: 0
+        // 🔒 DISCORD WEBHOOK (Paste your exact link here inside the quotes!)
+        const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
+
+        // APP DATA
+        let db = JSON.parse(localStorage.getItem("flockData")) || {
+            username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0,
+            appointments: [], medications: ["Vyvanse (9 am)", "Vitamin D (Weekly)"],
+            smartTasks: [
+                { name: "Morning Bible Study", freq: "Daily", day: "Monday", priority: 1 },
+                { name: "Make the bed", freq: "Daily", day: "Monday", priority: 2 }
+            ]
         };
 
-        const bibleBooks = [
-            "Genesis,50", "Exodus,40", "Leviticus,27", "Numbers,36", "Deuteronomy,34", "Joshua,24", "Judges,21", "Ruth,4", "1 Samuel,31", "2 Samuel,24", "1 Kings,22", "2 Kings,25", "1 Chronicles,29", "2 Chronicles,36", "Ezra,10", "Nehemiah,13", "Esther,10", "Job,42", "Psalms,150", "Proverbs,31", "Ecclesiastes,12", "Song of Solomon,8", "Isaiah,66", "Jeremiah,52", "Lamentations,5", "Ezekiel,48", "Daniel,12", "Hosea,14", "Joel,3", "Amos,9", "Obadiah,1", "Jonah,4", "Micah,7", "Nahum,3", "Habakkuk,3", "Zephaniah,3", "Haggai,2", "Zechariah,14", "Malachi,4", "Matthew,28", "Mark,16", "Luke,24", "John,21", "Acts,28", "Romans,16", "1 Corinthians,16", "2 Corinthians,13", "Galatians,6", "Ephesians,6", "Philippians,4", "Colossians,4", "1 Thessalonians,5", "2 Thessalonians,3", "1 Timothy,6", "2 Timothy,4", "Titus,3", "Philemon,1", "Hebrews,13", "James,5", "1 Peter,5", "2 Peter,3", "1 John,5", "2 John,3", "3 John,1", "Jude,1", "Revelation,22"
-        ];
-        let allChapters = [];
-        bibleBooks.forEach(b => {
-            let parts = b.split(',');
-            for(let i=1; i<=parseInt(parts[1]); i++) allChapters.push(`${parts[0]} ${i}`);
-        });
+        // TRACK SELECTED ITEMS IN LISTS
+        let selAppt = -1, selMed = -1, selTask = -1;
 
-        // 2. Boot App
+        // BIBLE CHAPTERS
+        const bibleBooks = ["Genesis,50", "Exodus,40", "Leviticus,27", "Numbers,36", "Deuteronomy,34", "Joshua,24", "Judges,21", "Ruth,4", "1 Samuel,31", "2 Samuel,24", "1 Kings,22", "2 Kings,25", "1 Chronicles,29", "2 Chronicles,36", "Ezra,10", "Nehemiah,13", "Esther,10", "Job,42", "Psalms,150", "Proverbs,31", "Ecclesiastes,12", "Song of Solomon,8", "Isaiah,66", "Jeremiah,52", "Lamentations,5", "Ezekiel,48", "Daniel,12", "Hosea,14", "Joel,3", "Amos,9", "Obadiah,1", "Jonah,4", "Micah,7", "Nahum,3", "Habakkuk,3", "Zephaniah,3", "Haggai,2", "Zechariah,14", "Malachi,4", "Matthew,28", "Mark,16", "Luke,24", "John,21", "Acts,28", "Romans,16", "1 Corinthians,16", "2 Corinthians,13", "Galatians,6", "Ephesians,6", "Philippians,4", "Colossians,4", "1 Thessalonians,5", "2 Thessalonians,3", "1 Timothy,6", "2 Timothy,4", "Titus,3", "Philemon,1", "Hebrews,13", "James,5", "1 Peter,5", "2 Peter,3", "1 John,5", "2 John,3", "3 John,1", "Jude,1", "Revelation,22"];
+        let allChapters = [];
+        bibleBooks.forEach(b => { let p = b.split(','); for(let i=1; i<=parseInt(p[1]); i++) allChapters.push(`${p[0]} ${i}`); });
+
+        // BOOT LOGIC
         window.onload = () => {
-            if (userData.username !== "") {
+            document.getElementById('print-date').valueAsDate = new Date();
+            if (db.username !== "") {
                 document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-screen').style.display = 'block';
                 startApp();
             }
         };
 
-        // 3. Login
+        function saveData() { localStorage.setItem("flockData", JSON.stringify(db)); }
+
+        // --- 1. LOGIN & TAB ENGINE ---
         function login() {
-            let user = document.getElementById("username-input").value.trim();
-            if(user === "") return alert("Please enter a username!");
+            let u = document.getElementById("username-input").value.trim();
+            let p = document.getElementById("password-input").value.trim();
+            if(u === "" || p === "") return alert("Enter username and password!");
             
-            userData.username = user;
-            saveData();
+            if (db.username === "") { db.username = u; db.password = p; saveData(); } 
+            else if (db.username !== u || db.password !== p) { return alert("Incorrect login!"); }
             
             document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('app-screen').style.display = 'block';
             startApp();
         }
 
         function startApp() {
-            document.getElementById('welcome-text').innerText = `Good Morning, ${userData.username}!`;
-            checkStreak();
-            fetchVerse();
-            updateReadingUI();
+            document.getElementById('welcome-text').innerText = `Good Morning, ${db.username}!`;
+            checkStreak(); fetchVerse(); updateReadingUI(); refreshAllLists(); refreshDashboard();
         }
 
-        // 4. Streak Engine
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // --- 2. STREAK, BIBLE & DISCORD ENGINE ---
         function checkStreak() {
             let today = new Date().toDateString();
-            let yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-
-            if (userData.lastOpened === yesterday.toDateString()) {
-                userData.streakDays++;
-            } else if (userData.lastOpened !== today) {
-                userData.streakDays = 1;
-            }
-            userData.lastOpened = today;
-            saveData();
-
-            document.getElementById('streak-badge').innerText = `🔥 ${userData.streakDays} Day Streak!`;
+            let yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+            if (db.lastOpened === yesterday.toDateString()) db.streakDays++;
+            else if (db.lastOpened !== today) db.streakDays = 1;
+            db.lastOpened = today; saveData();
+            document.getElementById('streak-badge').innerText = `🔥 ${db.streakDays} Day Streak!`;
         }
 
-        // 5. Reading Engine
-        function updateReadingUI() {
-            let start = userData.readingIndex;
-            if (start >= allChapters.length) start = 0;
-            let startChap = allChapters[start];
-            let endChap = allChapters[Math.min(start + 3, allChapters.length - 1)];
-
-            let startBook = startChap.substring(0, startChap.lastIndexOf(' '));
-            let endBook = endChap.substring(0, endChap.lastIndexOf(' '));
-
-            let displayTxt = (startBook === endBook) 
-                ? `${startBook} ${startChap.substring(startChap.lastIndexOf(' ')+1)}-${endChap.substring(endChap.lastIndexOf(' ')+1)}`
-                : `${startChap} - ${endChap}`;
-            
-            document.getElementById('reading-text').innerText = displayTxt;
+        function getReadingString() {
+            let s = db.readingIndex; if (s >= allChapters.length) s = 0;
+            let start = allChapters[s]; let end = allChapters[Math.min(s+3, allChapters.length-1)];
+            let sBook = start.substring(0, start.lastIndexOf(' ')); let eBook = end.substring(0, end.lastIndexOf(' '));
+            return (sBook === eBook) ? `${sBook} ${start.substring(start.lastIndexOf(' ')+1)}-${end.substring(end.lastIndexOf(' ')+1)}` : `${start} - ${end}`;
         }
 
-        function advanceReading() {
-            userData.readingIndex += 4;
-            if (userData.readingIndex >= allChapters.length) userData.readingIndex = 0;
-            saveData();
-            updateReadingUI();
+        function updateReadingUI() { document.getElementById('reading-text').innerText = getReadingString(); }
+
+        async function advanceReading() {
+            await postToDiscord();
+            db.readingIndex += 4; if(db.readingIndex >= allChapters.length) db.readingIndex = 0;
+            saveData(); updateReadingUI();
         }
 
-        // 6. GitHub Verse Engine
+        async function postToDiscord() {
+            if (!SECRET_WEBHOOK || SECRET_WEBHOOK.includes("YOUR_WEBHOOK_LINK_HERE")) return;
+            try {
+                let msg = `🕊️ **${db.username}** is currently on a **${db.streakDays}-Day Streak!** 🔥\n📖 Today's Study Focus: **${getReadingString()}**`;
+                await fetch(SECRET_WEBHOOK, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content: msg}) });
+            } catch(e) { console.log("Discord error:", e); }
+        }
+
         async function fetchVerse() {
             try {
                 document.getElementById('verse-text').innerText = "Loading the Word...";
-                let response = await fetch("https://raw.githubusercontent.com/koraooinc-lab/RobloxBibleData/refs/heads/main/Genesis.txt");
-                let rawText = await response.text();
-                
-                let flatText = rawText.replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ");
-                let verses = flatText.split(/(?=\b\d+:\d+\b|\[\d+:\d+\])/)
-                                     .map(v => v.trim()).filter(v => v.length > 15);
-
-                if(verses.length > 0) {
-                    let randomVerse = verses[Math.floor(Math.random() * verses.length)];
-                    document.getElementById('verse-text').innerText = randomVerse;
-                }
-            } catch (e) {
-                document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)";
-            }
+                let res = await fetch("https://raw.githubusercontent.com/koraooinc-lab/RobloxBibleData/refs/heads/main/Genesis.txt");
+                let text = await res.text();
+                let flat = text.replace(/\r?\n|\r/g, " ").replace(/\s+/g, " ");
+                let verses = flat.split(/(?=\b\d+:\d+\b|\[\d+:\d+\])/).map(v => v.trim()).filter(v => v.length > 15);
+                if(verses.length > 0) document.getElementById('verse-text').innerText = verses[Math.floor(Math.random()*verses.length)];
+            } catch(e) { document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; }
         }
 
-        function saveData() { localStorage.setItem("flockData", JSON.stringify(userData)); }
+        // --- 3. SETTINGS & LISTS ENGINE ---
+        function refreshAllLists() {
+            // Appts
+            let al = document.getElementById('appt-listbox'); al.innerHTML = '';
+            db.appointments.forEach((a, i) => {
+                let div = document.createElement('div'); div.className = 'list-item'; div.innerText = `${a.date} @ ${a.time} - ${a.desc}`;
+                div.onclick = () => { document.querySelectorAll('#appt-listbox .list-item').forEach(el=>el.classList.remove('selected')); div.classList.add('selected'); selAppt = i; };
+                al.appendChild(div);
+            });
+            // Meds
+            let ml = document.getElementById('meds-listbox'); ml.innerHTML = '';
+            db.medications.forEach((m, i) => {
+                let div = document.createElement('div'); div.className = 'list-item'; div.innerText = m;
+                div.onclick = () => { document.querySelectorAll('#meds-listbox .list-item').forEach(el=>el.classList.remove('selected')); div.classList.add('selected'); selMed = i; };
+                ml.appendChild(div);
+            });
+            // Tasks
+            let tl = document.getElementById('tasks-listbox'); tl.innerHTML = '';
+            db.smartTasks.forEach((t, i) => {
+                let p = t.priority==1?"High":t.priority==2?"Normal":"Low"; let freq = t.freq=="Weekly"?`Weekly (${t.day})`:t.freq;
+                let div = document.createElement('div'); div.className = 'list-item'; div.innerText = `[${freq}] ${t.name} (Pri: ${p})`;
+                div.onclick = () => { document.querySelectorAll('#tasks-listbox .list-item').forEach(el=>el.classList.remove('selected')); div.classList.add('selected'); selTask = i; };
+                tl.appendChild(div);
+            });
+            refreshDashboard();
+        }
+
+        function refreshDashboard() {
+            let dateStr = document.getElementById('print-date').value; if(!dateStr) return;
+            let d = new Date(dateStr + 'T12:00:00Z'); 
+            let days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; let dayName = days[d.getUTCDay()];
+            let isFirst = d.getUTCDate() === 1;
+
+            let mList = document.getElementById('meds-print-list'); mList.innerHTML = '';
+            db.medications.forEach(m => { mList.innerHTML += `<div class="check-item"><input type="checkbox" checked> ${m}</div>`; });
+
+            let tList = document.getElementById('tasks-print-list'); tList.innerHTML = '';
+            let todaysTasks = db.smartTasks.filter(t => t.freq === "Daily" || (t.freq === "Weekly" && t.day === dayName) || (t.freq === "Monthly (1st)" && isFirst))
+                                           .sort((a,b) => a.priority - b.priority);
+            todaysTasks.forEach(t => {
+                let icon = t.priority==1?"🔥":t.priority==2?"⚡":"☁️";
+                tList.innerHTML += `<div class="check-item task-print-item"><input type="checkbox" checked> <span class="task-name">${icon} ${t.name}</span></div>`;
+            });
+        }
+
+        // ADD / REMOVE LOGIC
+        function addAppt() {
+            let date = document.getElementById('appt-date').value; let time = document.getElementById('appt-time').value; let desc = document.getElementById('appt-desc').value;
+            if(!date || !desc) return; db.appointments.push({date, time, desc}); document.getElementById('appt-desc').value = ''; saveData(); refreshAllLists();
+        }
+        function removeAppt() { if(selAppt>-1){ db.appointments.splice(selAppt,1); selAppt=-1; saveData(); refreshAllLists(); } }
+
+        function addMed() {
+            let n = document.getElementById('med-name').value; let t = document.getElementById('med-time').value;
+            if(!n) return; db.medications.push(t ? `${n} (${t})` : n); document.getElementById('med-name').value = ''; document.getElementById('med-time').value = ''; saveData(); refreshAllLists();
+        }
+        function removeMed() { if(selMed>-1){ db.medications.splice(selMed,1); selMed=-1; saveData(); refreshAllLists(); } }
+
+        function addSmartTask() {
+            let n = document.getElementById('task-name').value; let f = document.getElementById('task-freq').value; 
+            let d = document.getElementById('task-day').value; let p = parseInt(document.getElementById('task-prio').value);
+            if(!n) return; db.smartTasks.push({name:n, freq:f, day:d, priority:p}); document.getElementById('task-name').value=''; saveData(); refreshAllLists();
+        }
+        function removeSmartTask() { if(selTask>-1){ db.smartTasks.splice(selTask,1); selTask=-1; saveData(); refreshAllLists(); } }
+
+
+        // --- 4. PDF GENERATOR MAGIC ---
+        function generatePDF() {
+            // 1. Gather UI Data
+            let dateVal = document.getElementById('print-date').value;
+            let d = new Date(dateVal + 'T12:00:00Z'); 
+            let days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            
+            // 2. Map to Template
+            document.getElementById('pdf-day-title').innerText = days[d.getUTCDay()];
+            document.getElementById('pdf-date-title').innerText = `DATE: ${d.getUTCMonth()+1}/${d.getUTCDate()}/${d.getUTCFullYear()}`;
+            document.getElementById('pdf-verse').innerText = document.getElementById('verse-text').innerText;
+            document.getElementById('pdf-notes').innerText = document.getElementById('notes-text').value || " ";
+            document.getElementById('pdf-bigtask').innerText = document.getElementById('big-task').value.toUpperCase();
+            
+            // Chunks
+            let chunksHtml = '';
+            document.getElementById('chunk-steps').value.split('\n').forEach(c => { if(c.trim()!="") chunksHtml += `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0;">○ ${c}</p>`; });
+            document.getElementById('pdf-chunks').innerHTML = chunksHtml || '<p style="border-bottom: 1px solid #ccc; padding-bottom:10px;"></p><p style="border-bottom: 1px solid #ccc; padding-bottom:10px;"></p>';
+
+            // Todos (Reading + Dashboard List)
+            let todosHtml = '';
+            document.getElementById('pdf-reading').innerText = `○ Bible Reading: ${getReadingString()}`;
+            document.querySelectorAll('.task-print-item').forEach(el => {
+                let isChecked = el.querySelector('input').checked;
+                if(isChecked) {
+                    // Extract icon & name, removing the checkbox text
+                    let txt = el.querySelector('.task-name').innerText;
+                    todosHtml += `<p style="border-bottom: 1px solid #ccc; padding-bottom:3px; margin: 5px 0;">○ ${txt.substring(2)}</p>`;
+                }
+            });
+            document.getElementById('pdf-todos').innerHTML = todosHtml;
+
+            // Schedule Matrix
+            let schedHtml = '';
+            let todaysAppts = db.appointments.filter(a => a.date === dateVal);
+            for(let i=6; i<=22; i++) {
+                let ampm = i < 12 ? "AM" : "PM"; let hr = i > 12 ? i - 12 : i; let hrStr = hr < 10 ? `0${hr}` : hr;
+                let tLabel = `${hrStr}:00 ${ampm}`;
+                let foundAppt = todaysAppts.find(a => a.time === tLabel);
+                
+                schedHtml += `<div style="display:flex; border-bottom: 1px solid #ccc; padding: 3px 0; margin-bottom:2px;">
+                    <div style="width: 60px; font-weight:bold;">${tLabel}</div>
+                    <div style="flex:1;">${foundAppt ? '★ ' + foundAppt.desc : ''}</div>
+                </div>`;
+            }
+            document.getElementById('pdf-schedule').innerHTML = schedHtml;
+
+            // 3. Make PDF Template visible briefly to render
+            let element = document.getElementById('pdf-template');
+            element.style.display = 'block';
+
+            // 4. Trigger HTML2PDF Library
+            let opt = {
+                margin: 0.5,
+                filename: 'FlockTogether_Planner.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Hide it again when done!
+                element.style.display = 'none';
+            });
+        }
     </script>
 </body>
 </html>
