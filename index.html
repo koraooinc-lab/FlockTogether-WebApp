@@ -1,3 +1,8 @@
+Here is the complete, updated code with the PDF generation fix applied!
+
+I've swapped out the Blob URL method for a direct download and enabled CORS in the canvas settings. You can copy and paste this entire block directly into your repository.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -612,17 +617,22 @@
                 margin: 0.5, 
                 filename: 'FlockTogether_Planner.pdf', 
                 image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, scrollY: 0, windowWidth: 800 }, 
+                // Enable CORS to allow the canvas to render external/hosted images (like logo.png) without failing
+                html2canvas: { scale: 2, scrollY: 0, windowWidth: 800, useCORS: true }, 
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
             };
             
             window.scrollTo(0,0);
-            html2pdf().set(opt).from(clone).output('bloburl').then(function(pdfUrl) {
-                window.open(pdfUrl, '_blank');
+            
+            // Bypass Blob URLs and trigger an immediate file download using .save()
+            html2pdf().set(opt).from(clone).save().then(function() {
                 document.body.removeChild(clone);
-                btn.innerText = "✨ Generate My Planner PDF"; btn.style.opacity = "1"; 
+                btn.innerText = "✨ Generate My Planner PDF"; 
+                btn.style.opacity = "1"; 
             });
         }
     </script>
 </body>
 </html>
+
+```
