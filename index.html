@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flock Together Planner</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <!-- Using native jsPDF instead of html2pdf for perfect, crisp generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
@@ -72,8 +71,9 @@
         <div class="wizard-box">
             <div id="wiz-step-1" class="wizard-step active">
                 <h2 class="wizard-title">🧙‍♂️ Step 1: The Zones</h2>
-                <p class="wizard-subtitle">What areas or rooms need attention this week? (Separate with commas)</p>
-                <textarea id="wiz-areas-input" rows="3" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Poppins';" placeholder="E.g. Living Room, Master Bedroom, Upstairs Bathroom..."></textarea>
+                <!-- Text updated to let the user know new lines work too! -->
+                <p class="wizard-subtitle">What areas or rooms need attention this week? (Separate with commas or new lines)</p>
+                <textarea id="wiz-areas-input" rows="4" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); font-family: 'Poppins';" placeholder="E.g. Living Room&#10;Master Bedroom&#10;Upstairs Bathroom"></textarea>
                 <div style="text-align: right; margin-top: 20px;">
                     <button class="btn btn-purple" onclick="wizGoToStep2()">Next Step ➔</button>
                     <button class="btn btn-red" onclick="closeWizard()" style="margin-left: 10px;">Cancel</button>
@@ -358,23 +358,39 @@
         // ================= WIZARD & AI GROUPING ALGORITHM =================
         let wizRooms = []; let wizCurrentIdx = 0; let wizTasksByRoom = {}; let finalGroupedTasks = [];
 
-        function openWizard() { document.getElementById('wizard-overlay').style.display = 'flex'; document.querySelectorAll('.wizard-step').forEach(e => e.classList.remove('active')); document.getElementById('wiz-step-1').classList.add('active'); document.getElementById('wiz-areas-input').value = ''; }
+        function openWizard() { 
+            document.getElementById('wizard-overlay').style.display = 'flex'; 
+            document.querySelectorAll('.wizard-step').forEach(e => e.classList.remove('active')); 
+            document.getElementById('wiz-step-1').classList.add('active'); 
+            document.getElementById('wiz-areas-input').value = ''; 
+        }
+        
         function closeWizard() { document.getElementById('wizard-overlay').style.display = 'none'; }
 
         function wizGoToStep2() {
-            let input = document.getElementById('wiz-areas-input').value; wizRooms = input.split(',').map(r => r.trim()).filter(r => r.length > 0);
+            let input = document.getElementById('wiz-areas-input').value; 
+            // FIX: Split by both commas AND new lines (Enter key)
+            wizRooms = input.split(/[,\n]+/).map(r => r.trim()).filter(r => r.length > 0);
             if(wizRooms.length === 0) return alert("Please enter at least one room!");
             wizCurrentIdx = 0; wizTasksByRoom = {}; showRoomInput();
         }
 
         function showRoomInput() {
-            document.querySelectorAll('.wizard-step').forEach(e => e.classList.remove('active')); document.getElementById('wiz-step-2').classList.add('active');
-            document.getElementById('wiz-room-label').innerText = `What needs doing in the ${wizRooms[wizCurrentIdx]}?`; document.getElementById('wiz-tasks-input').value = '';
+            document.querySelectorAll('.wizard-step').forEach(e => e.classList.remove('active')); 
+            document.getElementById('wiz-step-2').classList.add('active');
+            document.getElementById('wiz-room-label').innerText = `What needs doing in the ${wizRooms[wizCurrentIdx]}?`; 
+            document.getElementById('wiz-tasks-input').value = '';
         }
 
         function wizProcessRoom() {
-            let tasks = document.getElementById('wiz-tasks-input').value.split('\n').map(t => t.trim()).filter(t => t.length > 0); wizTasksByRoom[wizRooms[wizCurrentIdx]] = tasks;
-            wizCurrentIdx++; if(wizCurrentIdx < wizRooms.length) { showRoomInput(); } else { runMagicAlgorithm(); }
+            let tasks = document.getElementById('wiz-tasks-input').value.split('\n').map(t => t.trim()).filter(t => t.length > 0); 
+            wizTasksByRoom[wizRooms[wizCurrentIdx]] = tasks;
+            wizCurrentIdx++; 
+            if(wizCurrentIdx < wizRooms.length) { 
+                showRoomInput(); // Loop to the next room
+            } else { 
+                runMagicAlgorithm(); // Done with all rooms
+            }
         }
 
         function categorizeTask(task) {
