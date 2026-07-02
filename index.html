@@ -541,12 +541,46 @@
                 doc.roundedRect(x, y - 9, 10, 10, 2, 2, 'S'); 
             }
 
-            // --- 3. DRAW HEADER ---
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(26);
-            doc.setTextColor(primary[0], primary[1], primary[2]);
-            doc.text("Flock Together", 40, 50);
+            // --- 3. DRAW HEADER & CAPTURE LOGO ---
+            let logoImg = document.querySelector('img[src*="logo.png"]');
+            let hasLogo = false;
+            
+            try {
+                // If the logo exists in the DOM and has successfully loaded
+                if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
+                    let canvas = document.createElement('canvas');
+                    canvas.width = logoImg.naturalWidth;
+                    canvas.height = logoImg.naturalHeight;
+                    let ctx = canvas.getContext('2d');
+                    ctx.drawImage(logoImg, 0, 0);
+                    let dataUrl = canvas.toDataURL('image/png');
+                    
+                    // Maintain aspect ratio for the PDF
+                    let aspect = logoImg.naturalWidth / logoImg.naturalHeight;
+                    let h = 25;
+                    let w = 25 * aspect;
+                    
+                    doc.addImage(dataUrl, 'PNG', 40, 32, w, h);
+                    hasLogo = true;
+                    
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(26);
+                    doc.setTextColor(primary[0], primary[1], primary[2]);
+                    doc.text("Flock Together", 40 + w + 10, 54); // Shift text over to make room for logo
+                }
+            } catch(e) {
+                console.log("Could not load logo into PDF.", e);
+            }
+            
+            // Fallback if logo processing fails
+            if(!hasLogo) {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(26);
+                doc.setTextColor(primary[0], primary[1], primary[2]);
+                doc.text("Flock Together", 40, 50);
+            }
 
+            // Date & Day Text
             doc.setFontSize(16);
             doc.text(dayName, 572, 40, { align: 'right' });
             doc.setFontSize(10);
@@ -656,7 +690,7 @@
             });
 
             // --- 8. RIGHT COLUMN: TO DO LIST ---
-            let tdY = drawBox("TO-DO LIST", 240, 310, 332, 250);
+            let tdY = drawBox("TASK LIST", 240, 310, 332, 250);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(textCol[0], textCol[1], textCol[2]);
