@@ -52,7 +52,6 @@
         .check-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
         .check-item input { margin-right: 10px; transform: scale(1.2); }
 
-        /* FIXED: Hidden properly without confusing the PDF camera */
         #pdf-template { display: none; width: 800px; padding: 40px; background: white; color: #333; font-family: sans-serif; }
         
         .day-column { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 15px; }
@@ -72,7 +71,6 @@
     <!-- WIZARD OVERLAY -->
     <div id="wizard-overlay">
         <div class="wizard-box">
-            <!-- STEP 1: AREAS -->
             <div id="wiz-step-1" class="wizard-step active">
                 <h2 class="wizard-title">🧙‍♂️ Step 1: The Zones</h2>
                 <p class="wizard-subtitle">What areas or rooms need attention this week? (Separate with commas)</p>
@@ -83,7 +81,6 @@
                 </div>
             </div>
 
-            <!-- STEP 2: TASKS PER AREA -->
             <div id="wiz-step-2" class="wizard-step">
                 <h2 class="wizard-title">🧙‍♂️ Step 2: The Details</h2>
                 <p class="wizard-subtitle" id="wiz-room-label">What needs doing in the [Room Name]?</p>
@@ -93,7 +90,6 @@
                 </div>
             </div>
 
-            <!-- STEP 3: THE ALGORITHM MAGIC -->
             <div id="wiz-step-3" class="wizard-step">
                 <h2 class="wizard-title">🧠 Smart Grouping Complete!</h2>
                 <p class="wizard-subtitle">The algorithm recognized like-minded tasks and grouped them. It also scheduled them across the lightest days of your week to prevent overwhelm.</p>
@@ -157,9 +153,9 @@
 
                 <div class="card gold-card grid-2">
                     <div>
-                        <h3 style="color: #D4AF37; margin-top: 0;">📖 Verse of the Day</h3>
+                        <h3 style="color: #D4AF37; margin-top: 0;">📖 Global Verse of the Day</h3>
                         <p id="verse-text" style="font-style: italic; font-size: 14px;">Loading the Word...</p>
-                        <button class="btn btn-gold" onclick="fetchVerse()">Draw a New Verse</button>
+                        <!-- Notice: The 'Draw New Verse' button has been completely removed! -->
                     </div>
                     <div style="text-align: center; display: flex; flex-direction: column; justify-content: center;">
                         <h3 style="color: #D4AF37; margin-top: 0;">📚 Today's Reading</h3>
@@ -388,6 +384,7 @@
             try { let msg = `🕊️ **${db.username}** is currently on a **${db.streakDays}-Day Streak!** 🔥\n📖 Today's Study Focus: **${getReadingString()}**`; await fetch(SECRET_WEBHOOK, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content: msg}) }); } catch(e) {}
         }
 
+        // GLOBAL MATH-SEEDED VERSE ENGINE
         async function fetchVerse() {
             try {
                 let res = await fetch("https://raw.githubusercontent.com/koraooinc-lab/RobloxBibleData/refs/heads/main/Genesis.txt");
@@ -400,9 +397,16 @@
                 }
                 if(currentBuilder) parsedVerses.push(currentBuilder.trim());
                 parsedVerses = parsedVerses.filter(v => v.length > 15);
-                if(parsedVerses.length > 0) document.getElementById('verse-text').innerText = parsedVerses[Math.floor(Math.random() * parsedVerses.length)];
+                
+                if(parsedVerses.length > 0) {
+                    // Everyone on Earth gets the exact same verse today based on the date!
+                    let daysSinceEpoch = Math.floor(Date.now() / 86400000);
+                    let globalIndex = daysSinceEpoch % parsedVerses.length;
+                    document.getElementById('verse-text').innerText = parsedVerses[globalIndex];
+                }
             } catch(e) { document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; }
         }
+
 
         // ================= WIZARD & AI GROUPING ALGORITHM =================
         let wizRooms = []; let wizCurrentIdx = 0; let wizTasksByRoom = {}; let finalGroupedTasks = [];
@@ -549,7 +553,7 @@
         function addAppt() { let date = document.getElementById('appt-date').value; let time = document.getElementById('appt-time').value; let desc = document.getElementById('appt-desc').value; if(!date||!desc) return; db.appointments.push({date, time, desc}); document.getElementById('appt-desc').value = ''; saveData(); refreshAllLists(); }
         function addMed() { let n = document.getElementById('med-name').value; let t = document.getElementById('med-time').value; if(!n) return; db.medications.push(t ? `${n} (${t})` : n); document.getElementById('med-name').value = ''; document.getElementById('med-time').value = ''; saveData(); refreshAllLists(); }
 
-        // --- 4. THE REPAIRED PDF GENERATOR ---
+        // --- 4. NEW PDF GENERATOR (Opens in New Tab, No Blanks) ---
         function generatePDF() {
             let btn = document.getElementById("pdf-btn");
             btn.innerText = "⏳ Generating Planner... Please wait!"; btn.style.opacity = "0.7";
@@ -581,27 +585,29 @@
             }
             document.getElementById('pdf-schedule').innerHTML = schedHtml;
 
-            // THE FIX: Move template into the camera's view but hide it behind the background
+            // FIX: Create a ghost clone of the template so the PDF camera can take a perfect picture without it being blank!
             let element = document.getElementById('pdf-template');
-            element.style.display = 'block';
-            element.style.position = 'absolute';
-            element.style.top = '0px';
-            element.style.left = '0px';
-            element.style.zIndex = '-9999';
+            let clone = element.cloneNode(true);
+            clone.style.display = 'block';
+            clone.style.position = 'absolute';
+            clone.style.top = '0';
+            clone.style.left = '0';
+            clone.style.zIndex = '-9999';
+            document.body.appendChild(clone);
 
             let opt = { 
                 margin: 0.5, 
                 filename: 'FlockTogether_Planner.pdf', 
                 image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, scrollY: 0 }, 
+                html2canvas: { scale: 2, scrollY: 0, windowWidth: 800 }, 
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
             };
             
-            // Scroll to top so the camera doesn't miss it
-            window.scrollTo(0,0);
-
-            html2pdf().set(opt).from(element).save().then(() => { 
-                element.style.display = 'none';
+            // Generate link and open in new tab instead of forcing a download!
+            html2pdf().set(opt).from(clone).output('bloburl').then(function(pdfUrl) {
+                window.open(pdfUrl, '_blank');
+                
+                document.body.removeChild(clone);
                 btn.innerText = "✨ Generate My Planner PDF"; 
                 btn.style.opacity = "1"; 
             });
