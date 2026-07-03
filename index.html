@@ -13,7 +13,7 @@
             --text: #4A5568; --border: #E2E8F0;
         }
 
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); user-select: none; }
         
         .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; text-align: center; display: inline-block;}
         .btn:hover { opacity: 0.85; transform: translateY(-2px); }
@@ -22,11 +22,11 @@
 
         #app-screen { display: flex; height: 100vh; overflow: hidden; }
         
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border); padding: 30px 15px; }
-        .tab-btn { display: block; width: 100%; text-align: left; background: transparent; color: #718096; border: none; padding: 15px; font-size: 16px; font-weight: 600; font-family: 'Poppins'; border-radius: 10px; cursor: pointer; margin-bottom: 5px; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border); padding: 30px 15px; box-sizing: border-box; }
+        .tab-btn { display: block; width: 100%; text-align: left; background: transparent; color: #718096; border: none; padding: 15px; font-size: 16px; font-weight: 600; font-family: 'Poppins'; border-radius: 10px; cursor: pointer; margin-bottom: 5px; pointer-events: auto; }
         .tab-btn.active { background: #E6F2FF; color: var(--primary); }
         
-        .content { flex: 1; padding: 40px; overflow-y: auto; }
+        .content { flex: 1; padding: 40px; overflow-y: auto; box-sizing: border-box; }
         .tab-content { display: none; max-width: 900px; margin: 0 auto; }
         .tab-content.active { display: block; }
         
@@ -140,9 +140,10 @@
                 <img src="logo.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
                 <h2 style="color: var(--primary); margin: 0; font-weight: 800;">Flock Together</h2>
             </div>
-            <button class="tab-btn active" onclick="switchTab('dashboard', this)">📋 Dashboard</button>
-            <button class="tab-btn" onclick="switchTab('appointments', this)">📅 Appointments</button>
-            <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ Settings</button>
+            <!-- Stripped inline handlers out for robust JS bindings near the bottom -->
+            <button class="tab-btn active" data-tab="dashboard">📋 Dashboard</button>
+            <button class="tab-btn" data-tab="appointments">📅 Appointments</button>
+            <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
         </div>
 
         <div class="content">
@@ -345,6 +346,20 @@
                     datePicker.valueAsDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
                 }
             } catch(e) { }
+
+            // NEW BULLETPROOF NAV BINDINGS FOR DISCORD IFRAMES
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    let targetTab = this.getAttribute("data-tab");
+                    
+                    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                    document.getElementById(targetTab).classList.add('active');
+                    
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
             startApp();
         });
 
@@ -355,13 +370,6 @@
         function startApp() {
             document.getElementById('welcome-text').innerText = `Good Morning!`;
             checkStreak(); fetchVerse(); updateReadingUI(); refreshAllLists(); refreshDashboard();
-        }
-
-        function switchTab(tabId, clickedBtn) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            if(clickedBtn) clickedBtn.classList.add('active');
         }
 
         function checkStreak() {
@@ -530,7 +538,6 @@
         function addZone() { let v = document.getElementById('new-zone-input').value.trim(); if(!v) return; db.zones.push(v); document.getElementById('new-zone-input').value = ''; saveData(); refreshAllLists(); }
         function addTask() { let v = document.getElementById('new-task-input').value.trim(); if(!v) return; db.tasks.push(v); document.getElementById('new-task-input').value = ''; saveData(); refreshAllLists(); }
 
-        // --- PDF MODAL CONTROLS ---
         function closePdfModal() {
             document.getElementById('pdf-modal-overlay').style.display = 'none';
             document.getElementById('pdf-preview-frame').src = '';
@@ -546,7 +553,6 @@
             }
         }
 
-        // --- PRETTY NATIVE PDF GENERATION WITH jsPDF ---
         function generatePDF() {
             let btn = document.getElementById("pdf-btn");
             btn.innerText = "⏳ Generating Premium PDF..."; 
@@ -683,7 +689,6 @@
                 doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(textCol[0], textCol[1], textCol[2]);
                 let wrappedNotes = doc.splitTextToSize(notes, 310); doc.text(wrappedNotes, 250, bdY + 5);
 
-                // --- OPEN CUSTOM MODAL INSTEAD OF NEW TAB ---
                 const pdfBlobUrl = doc.output('bloburl');
                 
                 document.getElementById('pdf-preview-frame').src = pdfBlobUrl;
