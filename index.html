@@ -24,7 +24,7 @@
         .btn-green { background: #48BB78; } .btn-red { background: #E53E3E; } .btn-purple { background: #805AD5; } .btn-gold { background: #D4AF37; } .btn-dark { background: var(--dark); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        #app-screen { display: none; display: flex; height: 100vh; overflow: hidden; }
+        #app-screen { display: none; height: 100vh; overflow: hidden; }
         
         .sidebar { width: 250px; background: white; border-right: 1px solid var(--border); padding: 30px 15px; }
         .tab-btn { display: block; width: 100%; text-align: left; background: transparent; color: #718096; border: none; padding: 15px; font-size: 16px; font-weight: 600; font-family: 'Poppins'; border-radius: 10px; cursor: pointer; margin-bottom: 5px; }
@@ -288,19 +288,27 @@
         </div>
     </div>
 
-
     <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
-        // Bumped version to v12 to force strict lockout and timezone fix
-        let db = JSON.parse(localStorage.getItem("flockData_v12")) || {
-            username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0, lastReadDate: "",
-            appointments: [], medications: [], 
-            weeklies: [], oneOffs: [],
-            zones: ["Living Room", "Kitchen", "Master Bedroom", "Guest Bedroom", "Bathroom", "Half Bath", "Dining Room", "Office", "Laundry Room", "Garage", "Playroom", "Hallway"],
-            tasks: ["Vacuum", "Sweep", "Mop", "Dust Surfaces", "Empty Trash", "Wipe Counters", "Clean Mirrors", "Clean Toilet", "Clean Tub/Shower", "Change Sheets", "Do Laundry", "Load Dishwasher", "Unload Dishwasher", "Pick Up Clutter", "Organize", "Water Plants"]
-        };
+        // --- NEW MEMORY BANK SETUP (Discord Safe) ---
+        let db;
+        try {
+            db = JSON.parse(localStorage.getItem("flockData_v12"));
+        } catch (e) {
+            console.warn("Discord blocked localStorage. Using temporary session memory.");
+        }
+
+        if (!db) {
+            db = {
+                username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0, lastReadDate: "",
+                appointments: [], medications: [], 
+                weeklies: [], oneOffs: [],
+                zones: ["Living Room", "Kitchen", "Master Bedroom", "Guest Bedroom", "Bathroom", "Half Bath", "Dining Room", "Office", "Laundry Room", "Garage", "Playroom", "Hallway"],
+                tasks: ["Vacuum", "Sweep", "Mop", "Dust Surfaces", "Empty Trash", "Wipe Counters", "Clean Mirrors", "Clean Toilet", "Clean Tub/Shower", "Change Sheets", "Do Laundry", "Load Dishwasher", "Unload Dishwasher", "Pick Up Clutter", "Organize", "Water Plants"]
+            };
+        }
 
         const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
@@ -309,21 +317,44 @@
 
         function getLocalDateStr(d) { let offset = d.getTimezoneOffset() * 60000; return new Date(d.getTime() - offset).toISOString().split('T')[0]; }
 
-        window.onload = () => {
+        document.addEventListener("DOMContentLoaded", () => {
             // Apply timezone offset so late nights don't register as tomorrow!
             let d = new Date();
             document.getElementById('print-date').valueAsDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-            if (db.username !== "") { document.getElementById('login-screen').style.display = 'none'; startApp(); }
-        };
+            
+            // Auto-login if previously saved
+            if (db.username !== "") { 
+                document.getElementById('login-screen').style.display = 'none'; 
+                document.getElementById('app-screen').style.display = 'flex';
+                startApp(); 
+            }
+        });
 
-        function saveData() { localStorage.setItem("flockData_v12", JSON.stringify(db)); }
+        function saveData() { 
+            try {
+                localStorage.setItem("flockData_v12", JSON.stringify(db)); 
+            } catch(e) {
+                // Fails silently in Discord so the app keeps working!
+            }
+        }
 
         function login() {
-            let u = document.getElementById("username-input").value.trim(); let p = document.getElementById("password-input").value.trim();
+            let u = document.getElementById("username-input").value.trim(); 
+            let p = document.getElementById("password-input").value.trim();
+            
             if(u === "" || p === "") return alert("Enter username and password!");
-            if (db.username === "") { db.username = u; db.password = p; saveData(); } 
-            else if (db.username !== u || db.password !== p) { return alert("Incorrect login!"); }
-            document.getElementById('login-screen').style.display = 'none'; startApp();
+            
+            if (db.username === "") { 
+                db.username = u; 
+                db.password = p; 
+                saveData(); 
+            } else if (db.username !== u || db.password !== p) { 
+                return alert("Incorrect login!"); 
+            }
+            
+            document.getElementById('login-screen').style.display = 'none'; 
+            document.getElementById('app-screen').style.display = 'flex';
+            startApp();
         }
 
         function startApp() {
@@ -368,7 +399,7 @@
         
         async function advanceReading() { 
             let btn = document.getElementById('reading-btn');
-            if (btn.disabled) return; // Hard lock to prevent multi-clicking
+            if (btn.disabled) return; 
             
             let today = new Date().toDateString();
             if (db.lastReadDate === today) {
@@ -376,21 +407,17 @@
                 return;
             }
 
-            // Immediately lock UI
             btn.innerText = "Posting... ⏳";
             btn.disabled = true;
             btn.style.backgroundColor = "#A0AEC0"; 
 
-            // Advance DB
             db.lastReadDate = today;
             db.readingIndex += 4; 
             if(db.readingIndex >= allChapters.length) db.readingIndex = 0; 
             saveData(); 
             
-            // Ping Discord
             await postToDiscord(); 
             
-            // Re-render UI to final Completed state
             updateReadingUI();
         }
 
@@ -528,17 +555,9 @@
         }
 
         // ================= DRAG AND DROP HANDLERS =================
-        function allowDrop(ev) { 
-            ev.preventDefault(); 
-        }
-        
-        function dragEnter(ev) { 
-            ev.currentTarget.style.backgroundColor = "#E6F2FF"; 
-        }
-        
-        function dragLeave(ev) { 
-            ev.currentTarget.style.backgroundColor = "white"; 
-        }
+        function allowDrop(ev) { ev.preventDefault(); }
+        function dragEnter(ev) { ev.currentTarget.style.backgroundColor = "#E6F2FF"; }
+        function dragLeave(ev) { ev.currentTarget.style.backgroundColor = "white"; }
         
         function dragStart(ev, type, index) {
             ev.dataTransfer.setData("taskType", type);
@@ -546,9 +565,7 @@
             ev.target.classList.add("dragging");
         }
         
-        function dragEnd(ev) {
-            ev.target.classList.remove("dragging");
-        }
+        function dragEnd(ev) { ev.target.classList.remove("dragging"); }
         
         function dropTask(ev, targetDateStr, targetDayIdx) {
             ev.preventDefault();
