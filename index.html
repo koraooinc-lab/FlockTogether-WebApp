@@ -20,13 +20,15 @@
         .btn-green { background: #48BB78; } .btn-red { background: #E53E3E; } .btn-purple { background: #805AD5; } .btn-gold { background: #D4AF37; } .btn-dark { background: var(--dark); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        #app-screen { display: flex; height: 100vh; overflow: hidden; }
+        /* UNLOCKED HEIGHT: No more internal scrollbar! */
+        #app-screen { display: flex; min-height: 100vh; height: auto; overflow: visible; }
         
         .sidebar { width: 250px; background: white; border-right: 1px solid var(--border); padding: 30px 15px; box-sizing: border-box; display: flex; flex-direction: column; }
         .tab-btn { display: block; width: 100%; text-align: left; background: transparent; color: #718096; border: none; padding: 15px; font-size: 16px; font-weight: 600; font-family: 'Poppins'; border-radius: 10px; cursor: pointer; margin-bottom: 5px; pointer-events: auto; }
         .tab-btn.active { background: #E6F2FF; color: var(--primary); }
         
-        .content { flex: 1; padding: 40px; overflow-y: auto; box-sizing: border-box; }
+        /* UNLOCKED OVERFLOW */
+        .content { flex: 1; padding: 40px; overflow: visible; box-sizing: border-box; }
         .tab-content { display: none; max-width: 900px; margin: 0 auto; }
         .tab-content.active { display: block; }
         
@@ -81,45 +83,35 @@
         .pdf-body iframe { width: 100%; height: 100%; border: none; border-radius: 8px; background: white; }
         .pdf-footer { padding: 15px 20px; background: white; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
 
-       /* =========================================
-           BULLETPROOF MOBILE RESPONSIVENESS
+        /* =========================================
+           MOBILE RESPONSIVENESS OVERHAUL
         ========================================= */
         @media (max-width: 850px) {
-            /* Unlock the height so the page naturally scrolls instead of squishing */
-            #app-screen { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow-y: auto !important; }
+            #app-screen { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow-y: visible !important; }
             
-            /* Convert sidebar to a horizontal, swipeable top navigation */
             .sidebar { width: 100% !important; padding: 10px !important; display: flex !important; flex-direction: row !important; overflow-x: auto !important; border-right: none !important; border-bottom: 2px solid var(--border) !important; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-            .sidebar::-webkit-scrollbar { display: none; } /* Hide ugly scrollbar on mobile */
+            .sidebar::-webkit-scrollbar { display: none; } 
             .sidebar .logo-container { display: none !important; } 
             
-            /* Prevent buttons from squishing; force them to maintain their shape */
             .tab-btn { margin-bottom: 0 !important; margin-right: 10px !important; padding: 10px 20px !important; font-size: 14px !important; display: inline-block !important; width: auto !important; flex: 0 0 auto !important; white-space: nowrap !important; }
             
-            /* Ensure the main content area expands */
             .content { padding: 15px !important; overflow: visible !important; height: auto !important; }
             
-            /* FORCE grids to become single stacked columns */
             .grid-2 { display: flex !important; flex-direction: column !important; gap: 15px !important; }
             
-            /* Tighten up cards so they don't bleed off the screen */
             .card { padding: 20px 15px !important; margin-bottom: 15px !important; width: 100% !important; box-sizing: border-box !important; }
             
-            /* Fix Dashboard Header alignment */
             .dashboard-header { flex-direction: column !important; align-items: flex-start !important; gap: 15px !important; }
             .dashboard-header h1 { font-size: 26px !important; }
             #nickname-input { max-width: 100% !important; }
             #streak-badge { align-self: flex-start !important; }
             
-            /* Ensure the Wizard fits */
             .wizard-box { padding: 20px !important; width: 95% !important; }
             .wizard-title { font-size: 20px !important; }
 
-            /* Stack PDF Modal buttons vertically on phones */
             .pdf-modal-box { width: 95% !important; height: 90% !important; }
             .pdf-footer { flex-direction: column !important; }
             .pdf-footer .btn { width: 100% !important; margin-bottom: 5px !important; }
-        }
         }
     </style>
 </head>
@@ -192,7 +184,6 @@
                 <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <div style="flex: 1;">
                         <h1 style="margin: 0; color: var(--dark); font-size: 32px;">Good Morning!</h1>
-                        <!-- NEW NICKNAME FIELD -->
                         <input type="text" id="nickname-input" placeholder="Enter a nickname for Discord..." onchange="updateNickname(this.value)" style="margin-top: 8px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: #FFF; font-family: 'Poppins'; font-size: 14px; width: 100%; max-width: 250px; box-sizing: border-box;">
                     </div>
                     <div style="background: #FFF3CD; color: #856404; padding: 10px 20px; border-radius: 12px; font-weight: bold; font-size: 16px;" id="streak-badge">🔥 1 Day Streak!</div>
@@ -357,7 +348,7 @@
 
         if (!db) {
             db = {
-                username: "", // Added Nickname support back in!
+                username: "",
                 lastOpened: "", streakDays: 0, readingIndex: 0, lastReadDate: "",
                 appointments: [], medications: [], 
                 weeklies: [], oneOffs: [],
@@ -370,7 +361,6 @@
         const bibleBooks = ["Genesis,50", "Exodus,40", "Leviticus,27", "Numbers,36", "Deuteronomy,34", "Joshua,24", "Judges,21", "Ruth,4", "1 Samuel,31", "2 Samuel,24", "1 Kings,22", "2 Kings,25", "1 Chronicles,29", "2 Chronicles,36", "Ezra,10", "Nehemiah,13", "Esther,10", "Job,42", "Psalms,150", "Proverbs,31", "Ecclesiastes,12", "Song of Solomon,8", "Isaiah,66", "Jeremiah,52", "Lamentations,5", "Ezekiel,48", "Daniel,12", "Hosea,14", "Joel,3", "Amos,9", "Obadiah,1", "Jonah,4", "Micah,7", "Nahum,3", "Habakkuk,3", "Zephaniah,3", "Haggai,2", "Zechariah,14", "Malachi,4", "Matthew,28", "Mark,16", "Luke,24", "John,21", "Acts,28", "Romans,16", "1 Corinthians,16", "2 Corinthians,13", "Galatians,6", "Ephesians,6", "Philippians,4", "Colossians,4", "1 Thessalonians,5", "2 Thessalonians,3", "1 Timothy,6", "2 Timothy,4", "Titus,3", "Philemon,1", "Hebrews,13", "James,5", "1 Peter,5", "2 Peter,3", "1 John,5", "2 John,3", "3 John,1", "Jude,1", "Revelation,22"];
         let allChapters = []; bibleBooks.forEach(b => { let p = b.split(','); for(let i=1; i<=parseInt(p[1]); i++) allChapters.push(`${p[0]} ${i}`); });
 
-        // --- HARDCODED VERSES FOR GUARANTEED SYNC ---
         const dailyVerses = [
             "In the beginning God created the heavens and the earth. - Genesis 1:1",
             "Trust in the LORD with all your heart and lean not on your own understanding. - Proverbs 3:5",
@@ -464,7 +454,6 @@
 
         async function postToDiscord() {
             if (!SECRET_WEBHOOK || SECRET_WEBHOOK.includes("YOUR_WEBHOOK_LINK_HERE")) return;
-            // Now pulls their Nickname instead of just saying "Someone"
             let displayName = db.username && db.username.length > 0 ? `**${db.username}**` : "Someone";
             try { let msg = `🕊️ ${displayName} is currently on a **${db.streakDays}-Day Streak!** 🔥\n📖 Today's Study Focus: **${getReadingString()}**`; await fetch(SECRET_WEBHOOK, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content: msg}) }); } catch(e) {}
         }
@@ -745,4 +734,4 @@
         }
     </script>
 </body>
-</html>
+</html> 
