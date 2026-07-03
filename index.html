@@ -69,17 +69,6 @@
         .draggable-task { font-size:12px; margin-bottom:8px; border:1px solid #E2E8F0; background:white; border-radius:6px; padding:8px; display:flex; justify-content:space-between; cursor:grab; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: transform 0.1s, box-shadow 0.1s; }
         .draggable-task:active { cursor: grabbing; transform: scale(0.98); box-shadow: 0 5px 10px rgba(0,0,0,0.1); }
         .draggable-task.dragging { opacity: 0.4; }
-
-        /* PDF PREVIEW MODAL STYLES */
-        #pdf-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; flex-direction: column; z-index: 3000; }
-        .pdf-modal-box { background: white; width: 90%; max-width: 800px; height: 85%; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .pdf-header { padding: 15px 20px; background: #F7FAFC; border-bottom: 1px solid #E2E8F0; display: flex; justify-content: space-between; align-items: center; }
-        .pdf-header h3 { margin: 0; color: #2D3748; }
-        .pdf-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #A0AEC0; transition: 0.2s; }
-        .pdf-close-btn:hover { color: #E53E3E; }
-        .pdf-body { flex: 1; background: #EDF2F7; padding: 10px; }
-        .pdf-body iframe { width: 100%; height: 100%; border: none; border-radius: 8px; background: white; }
-        .pdf-footer { padding: 15px 20px; background: white; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 10px; }
     </style>
 </head>
 <body>
@@ -115,24 +104,6 @@
         </div>
     </div>
 
-    <!-- PDF PREVIEW MODAL -->
-    <div id="pdf-modal-overlay">
-        <div class="pdf-modal-box">
-            <div class="pdf-header">
-                <h3>📄 Planner Preview</h3>
-                <button class="pdf-close-btn" onclick="closePdfModal()">&times;</button>
-            </div>
-            <div class="pdf-body">
-                <iframe id="pdf-preview-frame"></iframe>
-            </div>
-            <div class="pdf-footer">
-                <button class="btn btn-dark" onclick="closePdfModal()">Cancel</button>
-                <button class="btn btn-purple" onclick="printPdf()">🖨️ Print Document</button>
-                <a id="pdf-download-btn" class="btn btn-green" style="text-decoration:none;" download="FlockPlanner.pdf">⬇️ Download PDF</a>
-            </div>
-        </div>
-    </div>
-
     <!-- MAIN APP -->
     <div id="app-screen">
         <div class="sidebar">
@@ -140,7 +111,6 @@
                 <img src="logo.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
                 <h2 style="color: var(--primary); margin: 0; font-weight: 800;">Flock Together</h2>
             </div>
-            <!-- Stripped inline handlers out for robust JS bindings near the bottom -->
             <button class="tab-btn active" data-tab="dashboard">📋 Dashboard</button>
             <button class="tab-btn" data-tab="appointments">📅 Appointments</button>
             <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
@@ -316,7 +286,7 @@
 
         let db;
         try {
-            db = JSON.parse(localStorage.getItem("flockData_v13")); 
+            db = JSON.parse(localStorage.getItem("flockData_v14")); 
         } catch (e) {
             console.warn("Discord blocked localStorage. Using temporary session memory.");
         }
@@ -336,6 +306,27 @@
         const bibleBooks = ["Genesis,50", "Exodus,40", "Leviticus,27", "Numbers,36", "Deuteronomy,34", "Joshua,24", "Judges,21", "Ruth,4", "1 Samuel,31", "2 Samuel,24", "1 Kings,22", "2 Kings,25", "1 Chronicles,29", "2 Chronicles,36", "Ezra,10", "Nehemiah,13", "Esther,10", "Job,42", "Psalms,150", "Proverbs,31", "Ecclesiastes,12", "Song of Solomon,8", "Isaiah,66", "Jeremiah,52", "Lamentations,5", "Ezekiel,48", "Daniel,12", "Hosea,14", "Joel,3", "Amos,9", "Obadiah,1", "Jonah,4", "Micah,7", "Nahum,3", "Habakkuk,3", "Zephaniah,3", "Haggai,2", "Zechariah,14", "Malachi,4", "Matthew,28", "Mark,16", "Luke,24", "John,21", "Acts,28", "Romans,16", "1 Corinthians,16", "2 Corinthians,13", "Galatians,6", "Ephesians,6", "Philippians,4", "Colossians,4", "1 Thessalonians,5", "2 Thessalonians,3", "1 Timothy,6", "2 Timothy,4", "Titus,3", "Philemon,1", "Hebrews,13", "James,5", "1 Peter,5", "2 Peter,3", "1 John,5", "2 John,3", "3 John,1", "Jude,1", "Revelation,22"];
         let allChapters = []; bibleBooks.forEach(b => { let p = b.split(','); for(let i=1; i<=parseInt(p[1]); i++) allChapters.push(`${p[0]} ${i}`); });
 
+        // --- HARDCODED VERSES FOR GUARANTEED SYNC ---
+        const dailyVerses = [
+            "In the beginning God created the heavens and the earth. - Genesis 1:1",
+            "Trust in the LORD with all your heart and lean not on your own understanding. - Proverbs 3:5",
+            "I can do all things through Christ who strengthens me. - Philippians 4:13",
+            "For I know the plans I have for you, declares the LORD, plans to prosper you and not to harm you. - Jeremiah 29:11",
+            "The LORD is my shepherd, I lack nothing. - Psalm 23:1",
+            "And we know that in all things God works for the good of those who love him. - Romans 8:28",
+            "Be strong and courageous. Do not be afraid or terrified, for the LORD your God goes with you. - Deuteronomy 31:6",
+            "Thy word is a lamp unto my feet, and a light unto my path. - Psalm 119:105",
+            "Come to me, all you who are weary and burdened, and I will give you rest. - Matthew 11:28",
+            "But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness. - Galatians 5:22",
+            "Eze 11:5 Then the Spirit of the LORD came upon me, and he told me to say, 'This is what the LORD says to the people of Israel: Is that what you are saying? Yes, I know it is, for I know every thought that comes into your minds.'"
+        ];
+
+        function loadVerse() {
+            let daysSinceEpoch = Math.floor(Date.now() / 86400000);
+            let globalIndex = daysSinceEpoch % dailyVerses.length;
+            document.getElementById('verse-text').innerText = dailyVerses[globalIndex];
+        }
+
         function getLocalDateStr(d) { let offset = d.getTimezoneOffset() * 60000; return new Date(d.getTime() - offset).toISOString().split('T')[0]; }
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -347,7 +338,6 @@
                 }
             } catch(e) { }
 
-            // NEW BULLETPROOF NAV BINDINGS FOR DISCORD IFRAMES
             document.querySelectorAll(".tab-btn").forEach(btn => {
                 btn.addEventListener("click", function() {
                     let targetTab = this.getAttribute("data-tab");
@@ -364,12 +354,12 @@
         });
 
         function saveData() { 
-            try { localStorage.setItem("flockData_v13", JSON.stringify(db)); } catch(e) { }
+            try { localStorage.setItem("flockData_v14", JSON.stringify(db)); } catch(e) { }
         }
 
         function startApp() {
             document.getElementById('welcome-text').innerText = `Good Morning!`;
-            checkStreak(); fetchVerse(); updateReadingUI(); refreshAllLists(); refreshDashboard();
+            checkStreak(); loadVerse(); updateReadingUI(); refreshAllLists(); refreshDashboard();
         }
 
         function checkStreak() {
@@ -408,26 +398,6 @@
         async function postToDiscord() {
             if (!SECRET_WEBHOOK || SECRET_WEBHOOK.includes("YOUR_WEBHOOK_LINK_HERE")) return;
             try { let msg = `🕊️ Someone is currently on a **${db.streakDays}-Day Streak!** 🔥\n📖 Today's Study Focus: **${getReadingString()}**`; await fetch(SECRET_WEBHOOK, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content: msg}) }); } catch(e) {}
-        }
-
-        async function fetchVerse() {
-            try {
-                let res = await fetch("https://raw.githubusercontent.com/koraooinc-lab/RobloxBibleData/refs/heads/main/Genesis.txt");
-                let rawText = await res.text(); let rawLines = rawText.split(/\r?\n|\r/);
-                let parsedVerses = []; let currentBuilder = ""; let verseRegex = /^(?:[1-3]?\s*[A-Za-z]+\s+\d+:\d+|\d+:\d+|\[\d+:\d+\])/;
-                for(let line of rawLines) {
-                    let trimmed = line.trim(); if(!trimmed) continue;
-                    if(verseRegex.test(trimmed)) { if(currentBuilder) parsedVerses.push(currentBuilder.trim()); currentBuilder = trimmed; } 
-                    else { if(currentBuilder) currentBuilder += " " + trimmed; else parsedVerses.push(trimmed); }
-                }
-                if(currentBuilder) parsedVerses.push(currentBuilder.trim());
-                parsedVerses = parsedVerses.filter(v => v.length > 15);
-                if(parsedVerses.length > 0) {
-                    let daysSinceEpoch = Math.floor(Date.now() / 86400000);
-                    let globalIndex = daysSinceEpoch % parsedVerses.length;
-                    document.getElementById('verse-text').innerText = parsedVerses[globalIndex];
-                }
-            } catch(e) { document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; }
         }
 
         let wizRooms = []; let wizCurrentIdx = 0; let wizTasksByRoom = {}; let finalGroupedTasks = [];
@@ -538,21 +508,7 @@
         function addZone() { let v = document.getElementById('new-zone-input').value.trim(); if(!v) return; db.zones.push(v); document.getElementById('new-zone-input').value = ''; saveData(); refreshAllLists(); }
         function addTask() { let v = document.getElementById('new-task-input').value.trim(); if(!v) return; db.tasks.push(v); document.getElementById('new-task-input').value = ''; saveData(); refreshAllLists(); }
 
-        function closePdfModal() {
-            document.getElementById('pdf-modal-overlay').style.display = 'none';
-            document.getElementById('pdf-preview-frame').src = '';
-        }
-
-        function printPdf() {
-            try {
-                let frame = document.getElementById('pdf-preview-frame');
-                frame.contentWindow.focus();
-                frame.contentWindow.print();
-            } catch(e) {
-                alert("Discord blocks the print command here. Please click Download instead!");
-            }
-        }
-
+        // --- DIRECT PDF DOWNLOAD ---
         function generatePDF() {
             let btn = document.getElementById("pdf-btn");
             btn.innerText = "⏳ Generating Premium PDF..."; 
@@ -689,12 +645,9 @@
                 doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(textCol[0], textCol[1], textCol[2]);
                 let wrappedNotes = doc.splitTextToSize(notes, 310); doc.text(wrappedNotes, 250, bdY + 5);
 
-                const pdfBlobUrl = doc.output('bloburl');
-                
-                document.getElementById('pdf-preview-frame').src = pdfBlobUrl;
-                document.getElementById('pdf-download-btn').href = pdfBlobUrl;
-                document.getElementById('pdf-download-btn').download = `FlockPlanner_${formattedDate.replace(/\//g, '-')}.pdf`;
-                document.getElementById('pdf-modal-overlay').style.display = 'flex';
+                // Instantly save the PDF to the user's device instead of trying to open a preview window!
+                doc.save(`FlockPlanner_${formattedDate.replace(/\//g, '-')}.pdf`);
+                alert("Success! Your Premium Planner PDF has been downloaded.");
 
                 btn.innerText = "✨ Generate My Premium Planner PDF"; 
                 btn.style.opacity = "1"; 
@@ -706,4 +659,4 @@
         }
     </script>
 </body>
-</html>
+</html> 
