@@ -80,32 +80,23 @@
     <!-- WIZARD OVERLAY -->
     <div id="wizard-overlay">
         <div class="wizard-box">
-            <!-- STEP 1: ROOM SELECTION -->
             <div id="wiz-step-1" class="wizard-step active">
                 <h2 class="wizard-title">🧙‍♂️ Step 1: The Zones</h2>
                 <p class="wizard-subtitle">Select the areas or rooms that need attention this week.</p>
-                
                 <div id="room-chips-container" class="chip-container"></div>
-
                 <div style="text-align: right; margin-top: 20px;">
                     <button class="btn btn-purple" onclick="wizGoToStep2()">Next Step ➔</button>
                     <button class="btn btn-red" onclick="closeWizard()" style="margin-left: 10px;">Cancel</button>
                 </div>
             </div>
-
-            <!-- STEP 2: TASK SELECTION -->
             <div id="wiz-step-2" class="wizard-step">
                 <h2 class="wizard-title">🧙‍♂️ Step 2: The Details</h2>
                 <p class="wizard-subtitle" id="wiz-room-label">What needs doing in the [Room Name]?</p>
-                
                 <div id="task-chips-container" class="chip-container"></div>
-
                 <div style="text-align: right; margin-top: 20px;">
                     <button class="btn btn-purple" onclick="wizProcessRoom()">Next ➔</button>
                 </div>
             </div>
-
-            <!-- STEP 3: RESULTS -->
             <div id="wiz-step-3" class="wizard-step">
                 <h2 class="wizard-title">🧠 Smart Grouping Complete!</h2>
                 <p class="wizard-subtitle">The algorithm recognized like-minded tasks and grouped them. It also scheduled them across the lightest days of your week to prevent overwhelm.</p>
@@ -136,9 +127,10 @@
                 <img src="logo.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
                 <h2 style="color: var(--primary); margin: 0; font-weight: 800;">Flock Together</h2>
             </div>
-            <button class="tab-btn active" onclick="switchTab('dashboard')">📋 Dashboard</button>
-            <button class="tab-btn" onclick="switchTab('appointments')">📅 Appointments</button>
-            <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+            <!-- Added 'this' parameter to prevent click event crashes -->
+            <button class="tab-btn active" onclick="switchTab('dashboard', this)">📋 Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('appointments', this)">📅 Appointments</button>
+            <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ Settings</button>
         </div>
 
         <div class="content">
@@ -290,6 +282,21 @@
 
     <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
+        // ==========================================
+        // 🚨 DISCORD SANDBOX PATCH 🚨
+        // Discord strictly blocks standard alert() popups.
+        // This quietly transforms all alerts into modern floating UI elements!
+        // ==========================================
+        window.alert = function(msg) {
+            let modal = document.createElement('div');
+            modal.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#E53E3E; color:white; padding:15px 30px; border-radius:10px; z-index:9999; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,0.3); text-align:center; transition: opacity 0.3s ease;";
+            if (msg.includes("Success")) { modal.style.background = "#48BB78"; } // Make success alerts green!
+            modal.innerText = msg;
+            document.body.appendChild(modal);
+            setTimeout(() => { modal.style.opacity = '0'; }, 2500);
+            setTimeout(() => { modal.remove(); }, 2800);
+        };
+
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
         // --- NEW MEMORY BANK SETUP (Discord Safe) ---
@@ -362,11 +369,12 @@
             checkStreak(); fetchVerse(); updateReadingUI(); refreshAllLists(); refreshDashboard();
         }
 
-        function switchTab(tabId) {
+        // Updated for strict iframe compatibility 
+        function switchTab(tabId, clickedBtn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if(clickedBtn) clickedBtn.classList.add('active');
         }
 
         function checkStreak() {
