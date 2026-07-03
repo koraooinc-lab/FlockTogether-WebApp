@@ -15,16 +15,13 @@
 
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg); margin: 0; color: var(--text); }
         
-        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .login-card { background: var(--card-bg); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 320px; }
-        .login-card input { width: 90%; padding: 12px; margin: 10px 0 20px 0; border-radius: 8px; border: 1px solid var(--border); font-family: 'Poppins', sans-serif; }
-        
         .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; text-align: center; display: inline-block;}
         .btn:hover { opacity: 0.85; transform: translateY(-2px); }
         .btn-green { background: #48BB78; } .btn-red { background: #E53E3E; } .btn-purple { background: #805AD5; } .btn-gold { background: #D4AF37; } .btn-dark { background: var(--dark); }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-        #app-screen { display: none; height: 100vh; overflow: hidden; }
+        /* Set app-screen to display: flex so it shows immediately! */
+        #app-screen { display: flex; height: 100vh; overflow: hidden; }
         
         .sidebar { width: 250px; background: white; border-right: 1px solid var(--border); padding: 30px 15px; }
         .tab-btn { display: block; width: 100%; text-align: left; background: transparent; color: #718096; border: none; padding: 15px; font-size: 16px; font-weight: 600; font-family: 'Poppins'; border-radius: 10px; cursor: pointer; margin-bottom: 5px; }
@@ -108,18 +105,6 @@
         </div>
     </div>
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-screen">
-        <div class="login-card">
-            <img src="logo.png" alt="Flock Together Logo" style="width: 120px; height: auto; margin-bottom: 15px;" onerror="this.style.display='none'">
-            <h2 style="margin-top: 0; color: var(--primary);">Flock Together</h2>
-            <p style="font-size: 14px; margin-bottom: 25px;">Log in or create a profile</p>
-            <input type="text" id="username-input" placeholder="Username...">
-            <input type="password" id="password-input" placeholder="Password...">
-            <button class="btn" style="width: 100%;" onclick="login()">Enter the Hub</button>
-        </div>
-    </div>
-
     <!-- MAIN APP -->
     <div id="app-screen">
         <div class="sidebar">
@@ -127,7 +112,6 @@
                 <img src="logo.png" alt="Logo" style="width: 80px; height: auto; margin-bottom: 10px;" onerror="this.style.display='none'">
                 <h2 style="color: var(--primary); margin: 0; font-weight: 800;">Flock Together</h2>
             </div>
-            <!-- Added 'this' parameter to prevent click event crashes -->
             <button class="tab-btn active" onclick="switchTab('dashboard', this)">📋 Dashboard</button>
             <button class="tab-btn" onclick="switchTab('appointments', this)">📅 Appointments</button>
             <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ Settings</button>
@@ -283,14 +267,22 @@
     <!-- ================= JAVASCRIPT ENGINE ================= -->
     <script>
         // ==========================================
-        // 🚨 DISCORD SANDBOX PATCH 🚨
-        // Discord strictly blocks standard alert() popups.
-        // This quietly transforms all alerts into modern floating UI elements!
+        // 🚨 VISUAL ERROR CATCHER 🚨
+        // ==========================================
+        window.onerror = function(msg, url, line) {
+            let err = document.createElement('div');
+            err.style.cssText = "position:fixed; bottom:10px; left:10%; right:10%; background:#E53E3E; color:white; padding:15px; border-radius:10px; z-index:99999; font-size:14px; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,0.5); text-align:center;";
+            err.innerText = "CRASH DETECTED: " + msg + " (Line: " + line + ")";
+            document.body.appendChild(err);
+        };
+
+        // ==========================================
+        // 🚨 DISCORD SANDBOX ALERT PATCH 🚨
         // ==========================================
         window.alert = function(msg) {
             let modal = document.createElement('div');
             modal.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#E53E3E; color:white; padding:15px 30px; border-radius:10px; z-index:9999; font-weight:bold; box-shadow:0 10px 25px rgba(0,0,0,0.3); text-align:center; transition: opacity 0.3s ease;";
-            if (msg.includes("Success")) { modal.style.background = "#48BB78"; } // Make success alerts green!
+            if (msg.includes("Success")) { modal.style.background = "#48BB78"; }
             modal.innerText = msg;
             document.body.appendChild(modal);
             setTimeout(() => { modal.style.opacity = '0'; }, 2500);
@@ -299,17 +291,19 @@
 
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
-        // --- NEW MEMORY BANK SETUP (Discord Safe) ---
+        // --- DATA SETUP ---
         let db;
         try {
-            db = JSON.parse(localStorage.getItem("flockData_v12"));
+            // Re-enabled local storage so it saves properly on your website
+            db = JSON.parse(localStorage.getItem("flockData_v13")); 
         } catch (e) {
             console.warn("Discord blocked localStorage. Using temporary session memory.");
         }
 
+        // If local storage is empty or was blocked by Discord
         if (!db) {
             db = {
-                username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0, lastReadDate: "",
+                lastOpened: "", streakDays: 0, readingIndex: 0, lastReadDate: "",
                 appointments: [], medications: [], 
                 weeklies: [], oneOffs: [],
                 zones: ["Living Room", "Kitchen", "Master Bedroom", "Guest Bedroom", "Bathroom", "Half Bath", "Dining Room", "Office", "Laundry Room", "Garage", "Playroom", "Hallway"],
@@ -325,51 +319,32 @@
         function getLocalDateStr(d) { let offset = d.getTimezoneOffset() * 60000; return new Date(d.getTime() - offset).toISOString().split('T')[0]; }
 
         document.addEventListener("DOMContentLoaded", () => {
-            // Apply timezone offset so late nights don't register as tomorrow!
-            let d = new Date();
-            document.getElementById('print-date').valueAsDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
-            
-            // Auto-login if previously saved
-            if (db.username !== "") { 
-                document.getElementById('login-screen').style.display = 'none'; 
-                document.getElementById('app-screen').style.display = 'flex';
-                startApp(); 
+            try {
+                let d = new Date();
+                let datePicker = document.getElementById('print-date');
+                if(datePicker) {
+                    datePicker.valueAsDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+                }
+            } catch(e) {
+                console.log("Date picker init skipped.");
             }
+            // Auto-start the app instantly since there's no login
+            startApp();
         });
 
         function saveData() { 
             try {
-                localStorage.setItem("flockData_v12", JSON.stringify(db)); 
+                localStorage.setItem("flockData_v13", JSON.stringify(db)); 
             } catch(e) {
-                // Fails silently in Discord so the app keeps working!
+                // Fails silently in Discord
             }
-        }
-
-        function login() {
-            let u = document.getElementById("username-input").value.trim(); 
-            let p = document.getElementById("password-input").value.trim();
-            
-            if(u === "" || p === "") return alert("Enter username and password!");
-            
-            if (db.username === "") { 
-                db.username = u; 
-                db.password = p; 
-                saveData(); 
-            } else if (db.username !== u || db.password !== p) { 
-                return alert("Incorrect login!"); 
-            }
-            
-            document.getElementById('login-screen').style.display = 'none'; 
-            document.getElementById('app-screen').style.display = 'flex';
-            startApp();
         }
 
         function startApp() {
-            document.getElementById('welcome-text').innerText = `Good Morning, ${db.username}!`;
+            document.getElementById('welcome-text').innerText = `Good Morning!`;
             checkStreak(); fetchVerse(); updateReadingUI(); refreshAllLists(); refreshDashboard();
         }
 
-        // Updated for strict iframe compatibility 
         function switchTab(tabId, clickedBtn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -422,16 +397,15 @@
             db.lastReadDate = today;
             db.readingIndex += 4; 
             if(db.readingIndex >= allChapters.length) db.readingIndex = 0; 
-            saveData(); 
+            saveData();
             
             await postToDiscord(); 
-            
             updateReadingUI();
         }
 
         async function postToDiscord() {
             if (!SECRET_WEBHOOK || SECRET_WEBHOOK.includes("YOUR_WEBHOOK_LINK_HERE")) return;
-            try { let msg = `🕊️ **${db.username}** is currently on a **${db.streakDays}-Day Streak!** 🔥\n📖 Today's Study Focus: **${getReadingString()}**`; await fetch(SECRET_WEBHOOK, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content: msg}) }); } catch(e) {}
+            try { let msg = `🕊️ Someone is currently on a **${db.streakDays}-Day Streak!** 🔥\n📖 Today's Study Focus: **${getReadingString()}**`; await fetch(SECRET_WEBHOOK, { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content: msg}) }); } catch(e) {}
         }
 
         async function fetchVerse() {
@@ -669,261 +643,255 @@
             btn.innerText = "⏳ Generating Premium PDF..."; 
             btn.style.opacity = "0.7";
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ unit: 'pt', format: 'letter' });
-
-            // --- 1. GATHER ALL DATA ---
-            let dateVal = document.getElementById('print-date').value; 
-            let dateParts = dateVal.split('-'); 
-            let d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            let dayName = dayNames[d.getDay()];
-            let formattedDate = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
-
-            let verseText = document.getElementById('verse-text').innerText;
-            let bigTask = document.getElementById('big-task').value.toUpperCase();
-            let chunks = document.getElementById('chunk-steps').value.split('\n').filter(c => c.trim() !== "");
-            let notes = document.getElementById('notes-text').value;
-            let reading = getReadingString();
-
-            let selfCareItems = ["Brush Teeth", "Shower"];
-            document.querySelectorAll('.med-print-item').forEach(el => { 
-                if(el.querySelector('input').checked) selfCareItems.push(el.querySelector('.task-name').innerText);
-            });
-
-            let todos = [`Bible Reading: ${reading}`];
-            document.querySelectorAll('.task-print-item').forEach(el => { 
-                if(el.querySelector('input').checked) {
-                    let rawText = el.querySelector('.task-name').innerText;
-                    let cleanText = rawText.replace(/[^\x20-\x7E]/g, '').trim(); 
-                    todos.push(cleanText);
-                }
-            });
-
-            let todaysAppts = db.appointments.filter(a => a.date === dateVal);
-
-            // --- 2. SET UP THEMES ---
-            let themeSel = document.getElementById('print-theme').value;
-            let primary = [0, 123, 255]; 
-            let accent = [220, 160, 0];  
-            let textCol = [60, 60, 60];  
-            let lightBg = [252, 253, 255]; 
-
-            if (themeSel === 'boho') { primary = [213, 165, 134]; accent = [174, 198, 207]; lightBg = [254, 251, 249]; }
-            else if (themeSel === 'ocean') { primary = [142, 124, 195]; accent = [180, 167, 214]; lightBg = [252, 250, 255]; }
-            else if (themeSel === 'botanical') { primary = [90, 115, 83]; accent = [138, 154, 134]; lightBg = [250, 253, 250]; }
-            else if (themeSel === 'minimal') { primary = [0, 0, 0]; accent = [80, 80, 80]; lightBg = [255, 255, 255]; }
-
-            function drawBox(title, x, y, w, h, isAccent = false) {
-                let col = isAccent ? accent : primary;
-                
-                doc.setDrawColor(col[0], col[1], col[2]);
-                doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
-                doc.setLineWidth(1.2);
-                doc.roundedRect(x, y, w, h, 6, 6, 'FD'); 
-                
-                doc.setFillColor(col[0], col[1], col[2]);
-                doc.roundedRect(x, y, w, 24, 6, 6, 'F');
-                doc.rect(x, y + 12, w, 12, 'F'); 
-                
-                doc.setFontSize(11);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(255, 255, 255);
-                doc.text(title, x + (w/2), y + 16, { align: 'center' });
-                
-                return y + 36; 
-            }
-
-            function drawCheck(x, y) {
-                doc.setDrawColor(180, 180, 180);
-                doc.setLineWidth(1);
-                doc.roundedRect(x, y - 9, 10, 10, 2, 2, 'S'); 
-            }
-
-            // --- 3. DRAW HEADER & CAPTURE LOGO ---
-            let logoImg = document.querySelector('img[src*="logo.png"]');
-            let hasLogo = false;
-            
             try {
-                if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
-                    let canvas = document.createElement('canvas');
-                    canvas.width = logoImg.naturalWidth;
-                    canvas.height = logoImg.naturalHeight;
-                    let ctx = canvas.getContext('2d');
-                    ctx.drawImage(logoImg, 0, 0);
-                    let dataUrl = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+
+                let dateVal = document.getElementById('print-date').value; 
+                let dateParts = dateVal.split('-'); 
+                let d = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+                let dayName = dayNames[d.getDay()];
+                let formattedDate = `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+
+                let verseText = document.getElementById('verse-text').innerText;
+                let bigTask = document.getElementById('big-task').value.toUpperCase();
+                let chunks = document.getElementById('chunk-steps').value.split('\n').filter(c => c.trim() !== "");
+                let notes = document.getElementById('notes-text').value;
+                let reading = getReadingString();
+
+                let selfCareItems = ["Brush Teeth", "Shower"];
+                document.querySelectorAll('.med-print-item').forEach(el => { 
+                    if(el.querySelector('input').checked) selfCareItems.push(el.querySelector('.task-name').innerText);
+                });
+
+                let todos = [`Bible Reading: ${reading}`];
+                document.querySelectorAll('.task-print-item').forEach(el => { 
+                    if(el.querySelector('input').checked) {
+                        let rawText = el.querySelector('.task-name').innerText;
+                        let cleanText = rawText.replace(/[^\x20-\x7E]/g, '').trim(); 
+                        todos.push(cleanText);
+                    }
+                });
+
+                let todaysAppts = db.appointments.filter(a => a.date === dateVal);
+
+                let themeSel = document.getElementById('print-theme').value;
+                let primary = [0, 123, 255]; 
+                let accent = [220, 160, 0];  
+                let textCol = [60, 60, 60];  
+                let lightBg = [252, 253, 255]; 
+
+                if (themeSel === 'boho') { primary = [213, 165, 134]; accent = [174, 198, 207]; lightBg = [254, 251, 249]; }
+                else if (themeSel === 'ocean') { primary = [142, 124, 195]; accent = [180, 167, 214]; lightBg = [252, 250, 255]; }
+                else if (themeSel === 'botanical') { primary = [90, 115, 83]; accent = [138, 154, 134]; lightBg = [250, 253, 250]; }
+                else if (themeSel === 'minimal') { primary = [0, 0, 0]; accent = [80, 80, 80]; lightBg = [255, 255, 255]; }
+
+                function drawBox(title, x, y, w, h, isAccent = false) {
+                    let col = isAccent ? accent : primary;
                     
-                    let aspect = logoImg.naturalWidth / logoImg.naturalHeight;
-                    let h = 25;
-                    let w = 25 * aspect;
+                    doc.setDrawColor(col[0], col[1], col[2]);
+                    doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+                    doc.setLineWidth(1.2);
+                    doc.roundedRect(x, y, w, h, 6, 6, 'FD'); 
                     
-                    doc.addImage(dataUrl, 'PNG', 40, 32, w, h);
-                    hasLogo = true;
+                    doc.setFillColor(col[0], col[1], col[2]);
+                    doc.roundedRect(x, y, w, 24, 6, 6, 'F');
+                    doc.rect(x, y + 12, w, 12, 'F'); 
                     
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(255, 255, 255);
+                    doc.text(title, x + (w/2), y + 16, { align: 'center' });
+                    
+                    return y + 36; 
+                }
+
+                function drawCheck(x, y) {
+                    doc.setDrawColor(180, 180, 180);
+                    doc.setLineWidth(1);
+                    doc.roundedRect(x, y - 9, 10, 10, 2, 2, 'S'); 
+                }
+
+                let logoImg = document.querySelector('img[src*="logo.png"]');
+                let hasLogo = false;
+                
+                try {
+                    if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
+                        let canvas = document.createElement('canvas');
+                        canvas.width = logoImg.naturalWidth;
+                        canvas.height = logoImg.naturalHeight;
+                        let ctx = canvas.getContext('2d');
+                        ctx.drawImage(logoImg, 0, 0);
+                        let dataUrl = canvas.toDataURL('image/png');
+                        
+                        let aspect = logoImg.naturalWidth / logoImg.naturalHeight;
+                        let h = 25;
+                        let w = 25 * aspect;
+                        
+                        doc.addImage(dataUrl, 'PNG', 40, 32, w, h);
+                        hasLogo = true;
+                        
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(26);
+                        doc.setTextColor(primary[0], primary[1], primary[2]);
+                        doc.text("Flock Together", 40 + w + 10, 54); 
+                    }
+                } catch(e) { }
+                
+                if(!hasLogo) {
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(26);
                     doc.setTextColor(primary[0], primary[1], primary[2]);
-                    doc.text("Flock Together", 40 + w + 10, 54); 
-                }
-            } catch(e) {
-                console.log("Could not load logo into PDF.", e);
-            }
-            
-            if(!hasLogo) {
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(26);
-                doc.setTextColor(primary[0], primary[1], primary[2]);
-                doc.text("Flock Together", 40, 50);
-            }
-
-            doc.setFontSize(16);
-            doc.text(dayName, 572, 40, { align: 'right' });
-            doc.setFontSize(10);
-            doc.setTextColor(120, 120, 120);
-            doc.text("DATE: " + formattedDate, 572, 55, { align: 'right' });
-
-            doc.setDrawColor(primary[0], primary[1], primary[2]);
-            doc.setLineWidth(1.5);
-            doc.line(40, 65, 572, 65);
-
-            // --- 4. LEFT COLUMN: SCHEDULE ---
-            let cY = drawBox("SCHEDULE", 40, 80, 180, 420);
-            for(let i=6; i<=22; i++) {
-                let ampm = i < 12 ? "AM" : "PM"; 
-                let hr = i > 12 ? i - 12 : i; 
-                let hrStr = hr < 10 ? `0${hr}` : hr; 
-                let tLabel = `${hrStr}:00 ${ampm}`;
-                let appt = todaysAppts.find(a => a.time === tLabel);
-
-                if (i % 2 === 0) {
-                    doc.setFillColor(245, 245, 245);
-                    doc.rect(41, cY - 11, 178, 23, 'F');
+                    doc.text("Flock Together", 40, 50);
                 }
 
-                doc.setFontSize(9);
-                doc.setFont('helvetica', 'bold');
-                doc.setTextColor(primary[0], primary[1], primary[2]);
-                doc.text(tLabel, 48, cY + 4);
-                
+                doc.setFontSize(16);
+                doc.text(dayName, 572, 40, { align: 'right' });
+                doc.setFontSize(10);
+                doc.setTextColor(120, 120, 120);
+                doc.text("DATE: " + formattedDate, 572, 55, { align: 'right' });
+
+                doc.setDrawColor(primary[0], primary[1], primary[2]);
+                doc.setLineWidth(1.5);
+                doc.line(40, 65, 572, 65);
+
+                let cY = drawBox("SCHEDULE", 40, 80, 180, 420);
+                for(let i=6; i<=22; i++) {
+                    let ampm = i < 12 ? "AM" : "PM"; 
+                    let hr = i > 12 ? i - 12 : i; 
+                    let hrStr = hr < 10 ? `0${hr}` : hr; 
+                    let tLabel = `${hrStr}:00 ${ampm}`;
+                    let appt = todaysAppts.find(a => a.time === tLabel);
+
+                    if (i % 2 === 0) {
+                        doc.setFillColor(245, 245, 245);
+                        doc.rect(41, cY - 11, 178, 23, 'F');
+                    }
+
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(primary[0], primary[1], primary[2]);
+                    doc.text(tLabel, 48, cY + 4);
+                    
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+                    if(appt) {
+                        let txt = appt.desc.length > 20 ? appt.desc.substring(0, 20) + "..." : appt.desc;
+                        doc.text("★ " + txt, 95, cY + 4);
+                    }
+                    cY += 23; 
+                }
+
+                cY = drawBox("SELF-CARE", 40, 510, 180, 200);
+                doc.setFontSize(10);
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(textCol[0], textCol[1], textCol[2]);
-                if(appt) {
-                    let txt = appt.desc.length > 20 ? appt.desc.substring(0, 20) + "..." : appt.desc;
-                    doc.text("★ " + txt, 95, cY + 4);
+                
+                selfCareItems.forEach(item => {
+                    drawCheck(48, cY);
+                    doc.text(item, 65, cY);
+                    cY += 18;
+                });
+
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(150, 150, 150);
+                doc.text("WATER", 130, 672, { align: 'center' });
+                
+                let wx = 62;
+                doc.setDrawColor(primary[0], primary[1], primary[2]);
+                for(let i=0; i<8; i++) {
+                    doc.circle(wx, 686, 5, 'S'); 
+                    wx += 19.5;
                 }
-                cY += 23; 
-            }
 
-            // --- 5. LEFT COLUMN: SELF CARE ---
-            cY = drawBox("SELF-CARE", 40, 510, 180, 200);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
-            
-            selfCareItems.forEach(item => {
-                drawCheck(48, cY);
-                doc.text(item, 65, cY);
-                cY += 18;
-            });
-
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(150, 150, 150);
-            doc.text("WATER", 130, 672, { align: 'center' });
-            
-            let wx = 62;
-            doc.setDrawColor(primary[0], primary[1], primary[2]);
-            for(let i=0; i<8; i++) {
-                doc.circle(wx, 686, 5, 'S'); 
-                wx += 19.5;
-            }
-
-            // --- 6. RIGHT COLUMN: DYNAMIC VERSE ---
-            doc.setDrawColor(accent[0], accent[1], accent[2]);
-            doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'italic');
-            let wrappedVerse = doc.splitTextToSize(`"${verseText}"`, 310);
-            let verseBoxHeight = Math.max(60, 42 + (wrappedVerse.length * 12));
-            
-            doc.roundedRect(240, 80, 332, verseBoxHeight, 6, 6, 'FD');
-            
-            doc.setFontSize(11);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(accent[0], accent[1], accent[2]);
-            doc.text("VERSE OF THE DAY", 406, 98, { align: 'center' });
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'italic');
-            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
-            doc.text(wrappedVerse, 406, 116, { align: 'center' });
-
-            let nextY = 80 + verseBoxHeight + 10;
-
-            // --- 7. RIGHT COLUMN: PRIORITIES & MEALS ---
-            let tY = drawBox("TOP PRIORITY", 240, nextY, 160, 150, true);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(accent[0], accent[1], accent[2]);
-            let wrappedBigTask = doc.splitTextToSize(bigTask, 140);
-            doc.text(wrappedBigTask, 320, tY + 4, { align: 'center' });
-            tY += (wrappedBigTask.length * 12) + 10; 
-
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
-            chunks.forEach(c => {
-                drawCheck(248, tY);
-                doc.text(c, 265, tY);
-                tY += 18;
-            });
-
-            let mY = drawBox("MEAL PLAN", 412, nextY, 160, 150);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
-            ["Breakfast:", "Lunch:", "Dinner:", "Snack:"].forEach(m => {
-                doc.text(m, 420, mY + 6);
-                doc.setDrawColor(220, 220, 220);
-                doc.setLineWidth(1);
-                doc.line(420, mY + 12, 560, mY + 12);
-                mY += 30;
-            });
-
-            let taskListY = nextY + 150 + 10;
-
-            // --- 8. RIGHT COLUMN: TASK LIST ---
-            let tdY = drawBox("TASK LIST", 240, taskListY, 332, 230);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
-            
-            todos.forEach(t => {
-                let wrappedTask = doc.splitTextToSize(t, 290);
-                drawCheck(250, tdY);
-                doc.text(wrappedTask, 268, tdY);
+                doc.setDrawColor(accent[0], accent[1], accent[2]);
+                doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
                 
-                let lineSpacing = (wrappedTask.length - 1) * 12;
-                doc.setDrawColor(230, 230, 230);
-                doc.line(250, tdY + 6 + lineSpacing, 558, tdY + 6 + lineSpacing);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'italic');
+                let wrappedVerse = doc.splitTextToSize(`"${verseText}"`, 310);
+                let verseBoxHeight = Math.max(60, 42 + (wrappedVerse.length * 12));
                 
-                tdY += 22 + lineSpacing; 
-            });
+                doc.roundedRect(240, 80, 332, verseBoxHeight, 6, 6, 'FD');
+                
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(accent[0], accent[1], accent[2]);
+                doc.text("VERSE OF THE DAY", 406, 98, { align: 'center' });
+                
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'italic');
+                doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+                doc.text(wrappedVerse, 406, 116, { align: 'center' });
 
-            let brainDumpY = taskListY + 230 + 10;
+                let nextY = 80 + verseBoxHeight + 10;
 
-            // --- 9. RIGHT COLUMN: BRAIN DUMP ---
-            let bdY = drawBox("BRAIN DUMP", 240, brainDumpY, 332, 120);
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(textCol[0], textCol[1], textCol[2]);
-            let wrappedNotes = doc.splitTextToSize(notes, 310);
-            doc.text(wrappedNotes, 250, bdY + 5);
+                let tY = drawBox("TOP PRIORITY", 240, nextY, 160, 150, true);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(accent[0], accent[1], accent[2]);
+                let wrappedBigTask = doc.splitTextToSize(bigTask, 140);
+                doc.text(wrappedBigTask, 320, tY + 4, { align: 'center' });
+                tY += (wrappedBigTask.length * 12) + 10; 
 
-            // --- 10. OPEN PDF DIRECTLY IN A NEW TAB ---
-            const pdfBlobUrl = doc.output('bloburl');
-            window.open(pdfBlobUrl, '_blank');
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+                chunks.forEach(c => {
+                    drawCheck(248, tY);
+                    doc.text(c, 265, tY);
+                    tY += 18;
+                });
 
-            btn.innerText = "✨ Generate My Premium Planner PDF"; 
-            btn.style.opacity = "1"; 
+                let mY = drawBox("MEAL PLAN", 412, nextY, 160, 150);
+                doc.setFont('helvetica', 'bold');
+                doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+                ["Breakfast:", "Lunch:", "Dinner:", "Snack:"].forEach(m => {
+                    doc.text(m, 420, mY + 6);
+                    doc.setDrawColor(220, 220, 220);
+                    doc.setLineWidth(1);
+                    doc.line(420, mY + 12, 560, mY + 12);
+                    mY += 30;
+                });
+
+                let taskListY = nextY + 150 + 10;
+
+                let tdY = drawBox("TASK LIST", 240, taskListY, 332, 230);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+                
+                todos.forEach(t => {
+                    let wrappedTask = doc.splitTextToSize(t, 290);
+                    drawCheck(250, tdY);
+                    doc.text(wrappedTask, 268, tdY);
+                    
+                    let lineSpacing = (wrappedTask.length - 1) * 12;
+                    doc.setDrawColor(230, 230, 230);
+                    doc.line(250, tdY + 6 + lineSpacing, 558, tdY + 6 + lineSpacing);
+                    
+                    tdY += 22 + lineSpacing; 
+                });
+
+                let brainDumpY = taskListY + 230 + 10;
+
+                let bdY = drawBox("BRAIN DUMP", 240, brainDumpY, 332, 120);
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(textCol[0], textCol[1], textCol[2]);
+                let wrappedNotes = doc.splitTextToSize(notes, 310);
+                doc.text(wrappedNotes, 250, bdY + 5);
+
+                const pdfBlobUrl = doc.output('bloburl');
+                window.open(pdfBlobUrl, '_blank');
+
+                btn.innerText = "✨ Generate My Premium Planner PDF"; 
+                btn.style.opacity = "1"; 
+            } catch (err) {
+                alert("PDF Error: " + err.message);
+                btn.innerText = "✨ Generate My Premium Planner PDF"; 
+                btn.style.opacity = "1"; 
+            }
         }
     </script>
 </body>
