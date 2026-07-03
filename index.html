@@ -80,7 +80,7 @@
                 <p class="wizard-subtitle">Select the areas or rooms that need attention this week.</p>
                 
                 <div id="room-chips-container" class="chip-container">
-                    <!-- Populated by JS -->
+                    <!-- Populated by JS from Zone Bank -->
                 </div>
 
                 <div style="text-align: right; margin-top: 20px;">
@@ -95,7 +95,7 @@
                 <p class="wizard-subtitle" id="wiz-room-label">What needs doing in the [Room Name]?</p>
                 
                 <div id="task-chips-container" class="chip-container">
-                    <!-- Populated by JS -->
+                    <!-- Populated by JS from Task Bank -->
                 </div>
 
                 <div style="text-align: right; margin-top: 20px;">
@@ -246,37 +246,41 @@
                 <h1 style="color: var(--dark); margin-bottom: 30px;">Master Settings & Backlog</h1>
                 
                 <div class="grid-2">
-                    <div class="card">
-                        <h3 style="color: #3182CE; margin-top: 0;">💊 Health & Medications</h3>
-                        <div class="grid-2">
-                            <div class="input-group"><label>Name:</label><input type="text" id="med-name"></div>
-                            <div class="input-group"><label>Time/Dose:</label><input type="text" id="med-time"></div>
+                    <div class="card robot-card">
+                        <h3 style="color: #805AD5; margin-top: 0;">🏠 Custom Zone Bank</h3>
+                        <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Customize the rooms that appear in your Wizard.</p>
+                        <div class="input-group">
+                            <input type="text" id="new-zone-input" placeholder="E.g., Back Patio..." style="font-size: 14px; padding: 10px;">
                         </div>
-                        <button class="btn" style="background:#3182CE; margin-bottom: 15px;" onclick="addMed()">Add Medication</button>
-                        <div id="meds-listbox" style="display:flex; flex-direction:column; gap:5px;"></div>
+                        <button class="btn btn-purple" style="width: 100%; margin-bottom: 15px;" onclick="addZone()">Add Zone</button>
+                        <div id="zones-listbox" class="list-box"></div>
                     </div>
 
-                    <div class="card robot-card">
-                        <h3 style="color: #805AD5; margin-top: 0;">⚙️ Manual Entry</h3>
-                        <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Add tasks manually bypassing the wizard.</p>
+                    <div class="card robot-card" style="border-color: #48BB78; background: #FAF5FF;">
+                        <h3 style="color: #48BB78; margin-top: 0;">📋 Custom Task Bank</h3>
+                        <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Customize the specific chores available in your Wizard.</p>
                         <div class="input-group">
-                            <input type="text" id="auto-task-name" placeholder="E.g., Wash the car..." style="font-size: 14px; padding: 10px;">
+                            <input type="text" id="new-task-input" placeholder="E.g., Clean Baseboards..." style="font-size: 14px; padding: 10px;">
                         </div>
-                        <div style="display: flex; gap: 5px;">
-                            <button class="btn btn-purple" style="flex: 1; padding: 8px;" onclick="autoScheduleManual('daily')">Every Day</button>
-                            <button class="btn btn-dark" style="flex: 1; padding: 8px;" onclick="autoScheduleManual('weekly')">Weekly</button>
-                            <button class="btn" style="flex: 1; padding: 8px; background: #4A5568;" onclick="autoScheduleManual('once')">Just Once</button>
-                        </div>
+                        <button class="btn btn-green" style="width: 100%; margin-bottom: 15px;" onclick="addTask()">Add Task</button>
+                        <div id="tasks-listbox" class="list-box"></div>
                     </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="color: #3182CE; margin-top: 0;">💊 Health & Medications</h3>
+                    <div class="grid-2">
+                        <div class="input-group"><label>Name:</label><input type="text" id="med-name"></div>
+                        <div class="input-group"><label>Time/Dose:</label><input type="text" id="med-time"></div>
+                    </div>
+                    <button class="btn" style="background:#3182CE; margin-bottom: 15px;" onclick="addMed()">Add Medication</button>
+                    <div id="meds-listbox" style="display:flex; flex-direction:column; gap:5px;"></div>
                 </div>
 
                 <div class="card">
                     <h3 style="margin-top: 0; color: var(--dark);">📅 The Week Ahead (Algorithm Overview)</h3>
                     <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Here is how the robot balanced your week.</p>
                     <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px;" id="weekly-overview"></div>
-                    
-                    <h4 style="margin-top: 20px; color: var(--dark);">🔄 Daily Routines</h4>
-                    <div id="dailies-listbox" style="display:flex; flex-direction:column; gap:5px; background: #F7FAFC; padding: 10px; border-radius: 8px;"></div>
                 </div>
             </div>
 
@@ -288,10 +292,13 @@
     <script>
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
-        let db = JSON.parse(localStorage.getItem("flockData_v8")) || {
+        // Bumped version to v9 to safely instantiate the new Word Banks
+        let db = JSON.parse(localStorage.getItem("flockData_v9")) || {
             username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0,
             appointments: [], medications: ["Vyvanse (9 am)", "Vitamin D (Weekly)"],
-            dailies: ["Make the bed", "Read Bible"], weeklies: [], oneOffs: []
+            weeklies: [], oneOffs: [],
+            zones: ["Living Room", "Kitchen", "Master Bedroom", "Guest Bedroom", "Bathroom", "Half Bath", "Dining Room", "Office", "Laundry Room", "Garage", "Playroom", "Hallway"],
+            tasks: ["Vacuum", "Sweep", "Mop", "Dust Surfaces", "Empty Trash", "Wipe Counters", "Clean Mirrors", "Clean Toilet", "Clean Tub/Shower", "Change Sheets", "Do Laundry", "Load Dishwasher", "Unload Dishwasher", "Pick Up Clutter", "Organize", "Water Plants"]
         };
 
         const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -306,7 +313,7 @@
             if (db.username !== "") { document.getElementById('login-screen').style.display = 'none'; startApp(); }
         };
 
-        function saveData() { localStorage.setItem("flockData_v8", JSON.stringify(db)); }
+        function saveData() { localStorage.setItem("flockData_v9", JSON.stringify(db)); }
 
         function login() {
             let u = document.getElementById("username-input").value.trim(); let p = document.getElementById("password-input").value.trim();
@@ -370,13 +377,9 @@
             } catch(e) { document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; }
         }
 
-        // ================= WIZARD & AI GROUPING ALGORITHM (WORD BANK VERSION) =================
+        // ================= WIZARD & AI GROUPING ALGORITHM (DYNAMIC WORD BANK VERSION) =================
         let wizRooms = []; let wizCurrentIdx = 0; let wizTasksByRoom = {}; let finalGroupedTasks = [];
         
-        // The predefined Word Banks
-        const commonRooms = ["Living Room", "Kitchen", "Master Bedroom", "Guest Bedroom", "Bathroom", "Half Bath", "Dining Room", "Office", "Laundry Room", "Garage", "Playroom", "Hallway"];
-        const commonTasks = ["Vacuum", "Sweep", "Mop", "Dust Surfaces", "Empty Trash", "Wipe Counters", "Clean Mirrors", "Clean Toilet", "Clean Tub/Shower", "Change Sheets", "Do Laundry", "Load Dishwasher", "Unload Dishwasher", "Pick Up Clutter", "Organize", "Water Plants"];
-
         function toggleChip(element) {
             element.classList.toggle('selected');
         }
@@ -386,10 +389,10 @@
             document.querySelectorAll('.wizard-step').forEach(e => e.classList.remove('active')); 
             document.getElementById('wiz-step-1').classList.add('active'); 
             
-            // Populate Room Chips
+            // Dynamically Populate Room Chips from Custom Bank
             let roomContainer = document.getElementById('room-chips-container');
             roomContainer.innerHTML = '';
-            commonRooms.forEach(room => {
+            db.zones.forEach(room => {
                 roomContainer.innerHTML += `<div class="chip" onclick="toggleChip(this)">${room}</div>`;
             });
         }
@@ -412,10 +415,10 @@
             document.getElementById('wiz-step-2').classList.add('active');
             document.getElementById('wiz-room-label').innerText = `What needs doing in the ${wizRooms[wizCurrentIdx]}?`; 
             
-            // Populate Task Chips
+            // Dynamically Populate Task Chips from Custom Bank
             let taskContainer = document.getElementById('task-chips-container');
             taskContainer.innerHTML = '';
-            commonTasks.forEach(task => {
+            db.tasks.forEach(task => {
                 taskContainer.innerHTML += `<div class="chip" onclick="toggleChip(this)">${task}</div>`;
             });
         }
@@ -475,11 +478,8 @@
 
         function getTaskLoadForDate(dateStr, dayOfWeekIndex) { let wCount = db.weeklies.filter(w => w.dayOfWeek === dayOfWeekIndex).length; let oCount = db.oneOffs.filter(o => o.dateStr === dateStr).length; return wCount + oCount; }
 
-        function autoScheduleManual(type) { let name = document.getElementById('auto-task-name').value.trim(); if(!name) return; autoScheduleEngine(name, type); document.getElementById('auto-task-name').value = ''; }
-
         function autoScheduleEngine(name, type) {
-            if(type === 'daily') { db.dailies.push(name); } 
-            else if(type === 'weekly') { let counts = [0,0,0,0,0,0,0]; db.weeklies.forEach(w => counts[w.dayOfWeek]++); let minDay = counts.indexOf(Math.min(...counts)); db.weeklies.push({ name: name, dayOfWeek: minDay }); } 
+            if(type === 'weekly') { let counts = [0,0,0,0,0,0,0]; db.weeklies.forEach(w => counts[w.dayOfWeek]++); let minDay = counts.indexOf(Math.min(...counts)); db.weeklies.push({ name: name, dayOfWeek: minDay }); } 
             else if(type === 'once') {
                 let lowestCount = 999; let bestDate = null;
                 for(let i=0; i<7; i++) { let d = new Date(); d.setDate(d.getDate() + i); let dateStr = getLocalDateStr(d); let count = getTaskLoadForDate(dateStr, d.getDay()); if(count < lowestCount) { lowestCount = count; bestDate = dateStr; } }
@@ -494,9 +494,14 @@
             
             let ml = document.getElementById('meds-listbox'); ml.innerHTML = '';
             db.medications.forEach((m, i) => { ml.innerHTML += `<div class="list-item"><span>${m}</span> <button class="del-btn" onclick="delMed(${i})">X</button></div>`; });
-            
-            let dl = document.getElementById('dailies-listbox'); dl.innerHTML = '';
-            db.dailies.forEach((d, i) => { dl.innerHTML += `<div class="list-item" style="background:white;"><span>${d}</span> <button class="del-btn" onclick="delDaily(${i})">X</button></div>`; });
+
+            // Render Zone Bank
+            let zl = document.getElementById('zones-listbox'); zl.innerHTML = '';
+            db.zones.forEach((z, i) => { zl.innerHTML += `<div class="list-item" style="background:white;"><span>${z}</span> <button class="del-btn" onclick="delZone(${i})">X</button></div>`; });
+
+            // Render Task Bank
+            let tl = document.getElementById('tasks-listbox'); tl.innerHTML = '';
+            db.tasks.forEach((t, i) => { tl.innerHTML += `<div class="list-item" style="background:white;"><span>${t}</span> <button class="del-btn" onclick="delTask(${i})">X</button></div>`; });
 
             let wg = document.getElementById('weekly-overview'); wg.innerHTML = '';
             for(let i=0; i<7; i++) {
@@ -517,18 +522,21 @@
             db.medications.forEach(m => { mList.innerHTML += `<div class="check-item med-print-item"><input type="checkbox" checked> <span class="task-name">${m}</span></div>`; });
 
             let tList = document.getElementById('tasks-print-list'); tList.innerHTML = '';
-            db.dailies.forEach(t => tList.innerHTML += `<div class="check-item task-print-item"><input type="checkbox" checked> <span class="task-name">🔄 ${t}</span></div>`);
             db.weeklies.filter(w => w.dayOfWeek === dayIdx).forEach(t => tList.innerHTML += `<div class="check-item task-print-item"><input type="checkbox" checked> <span class="task-name">📅 ${t.name}</span></div>`);
             db.oneOffs.filter(o => o.dateStr === dateStr).forEach(t => tList.innerHTML += `<div class="check-item task-print-item"><input type="checkbox" checked> <span class="task-name">🎯 ${t.name}</span></div>`);
         }
 
         function delAppt(i) { db.appointments.splice(i,1); saveData(); refreshAllLists(); }
         function delMed(i) { db.medications.splice(i,1); saveData(); refreshAllLists(); }
-        function delDaily(i) { db.dailies.splice(i,1); saveData(); refreshAllLists(); }
+        function delZone(i) { db.zones.splice(i,1); saveData(); refreshAllLists(); }
+        function delTask(i) { db.tasks.splice(i,1); saveData(); refreshAllLists(); }
         function delWeekly(i) { db.weeklies.splice(i,1); saveData(); refreshAllLists(); }
         function delOneOff(i) { db.oneOffs.splice(i,1); saveData(); refreshAllLists(); }
+        
         function addAppt() { let date = document.getElementById('appt-date').value; let time = document.getElementById('appt-time').value; let desc = document.getElementById('appt-desc').value; if(!date||!desc) return; db.appointments.push({date, time, desc}); document.getElementById('appt-desc').value = ''; saveData(); refreshAllLists(); }
         function addMed() { let n = document.getElementById('med-name').value; let t = document.getElementById('med-time').value; if(!n) return; db.medications.push(t ? `${n} (${t})` : n); document.getElementById('med-name').value = ''; document.getElementById('med-time').value = ''; saveData(); refreshAllLists(); }
+        function addZone() { let v = document.getElementById('new-zone-input').value.trim(); if(!v) return; db.zones.push(v); document.getElementById('new-zone-input').value = ''; saveData(); refreshAllLists(); }
+        function addTask() { let v = document.getElementById('new-task-input').value.trim(); if(!v) return; db.tasks.push(v); document.getElementById('new-task-input').value = ''; saveData(); refreshAllLists(); }
 
         // --- PRETTY NATIVE PDF GENERATION WITH jsPDF ---
         function generatePDF() {
@@ -587,28 +595,23 @@
             function drawBox(title, x, y, w, h, isAccent = false) {
                 let col = isAccent ? accent : primary;
                 
-                // Main Box Background & Border
                 doc.setDrawColor(col[0], col[1], col[2]);
                 doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
                 doc.setLineWidth(1.2);
                 doc.roundedRect(x, y, w, h, 6, 6, 'FD'); 
                 
-                // Solid Colored Header Banner
                 doc.setFillColor(col[0], col[1], col[2]);
                 doc.roundedRect(x, y, w, 24, 6, 6, 'F');
-                // Square off the bottom corners of the header so it seamlessly connects to the box
                 doc.rect(x, y + 12, w, 12, 'F'); 
                 
-                // Header Text
                 doc.setFontSize(11);
                 doc.setFont('helvetica', 'bold');
-                doc.setTextColor(255, 255, 255); // White text
+                doc.setTextColor(255, 255, 255);
                 doc.text(title, x + (w/2), y + 16, { align: 'center' });
                 
-                return y + 36; // Return the safe starting Y coordinate for interior text
+                return y + 36; 
             }
 
-            // --- HELPER: DRAW CHECKBOX ---
             function drawCheck(x, y) {
                 doc.setDrawColor(180, 180, 180);
                 doc.setLineWidth(1);
@@ -620,7 +623,6 @@
             let hasLogo = false;
             
             try {
-                // If the logo exists in the DOM and has successfully loaded
                 if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
                     let canvas = document.createElement('canvas');
                     canvas.width = logoImg.naturalWidth;
@@ -629,7 +631,6 @@
                     ctx.drawImage(logoImg, 0, 0);
                     let dataUrl = canvas.toDataURL('image/png');
                     
-                    // Maintain aspect ratio for the PDF
                     let aspect = logoImg.naturalWidth / logoImg.naturalHeight;
                     let h = 25;
                     let w = 25 * aspect;
@@ -640,13 +641,12 @@
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(26);
                     doc.setTextColor(primary[0], primary[1], primary[2]);
-                    doc.text("Flock Together", 40 + w + 10, 54); // Shift text over to make room for logo
+                    doc.text("Flock Together", 40 + w + 10, 54); 
                 }
             } catch(e) {
                 console.log("Could not load logo into PDF.", e);
             }
             
-            // Fallback if logo processing fails
             if(!hasLogo) {
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(26);
@@ -654,19 +654,17 @@
                 doc.text("Flock Together", 40, 50);
             }
 
-            // Date & Day Text
             doc.setFontSize(16);
             doc.text(dayName, 572, 40, { align: 'right' });
             doc.setFontSize(10);
             doc.setTextColor(120, 120, 120);
             doc.text("DATE: " + formattedDate, 572, 55, { align: 'right' });
 
-            // Accent Line under header
             doc.setDrawColor(primary[0], primary[1], primary[2]);
             doc.setLineWidth(1.5);
             doc.line(40, 65, 572, 65);
 
-            // --- 4. LEFT COLUMN: SCHEDULE (With Alternating Row Colors) ---
+            // --- 4. LEFT COLUMN: SCHEDULE ---
             let cY = drawBox("SCHEDULE", 40, 80, 180, 420);
             for(let i=6; i<=22; i++) {
                 let ampm = i < 12 ? "AM" : "PM"; 
@@ -675,7 +673,6 @@
                 let tLabel = `${hrStr}:00 ${ampm}`;
                 let appt = todaysAppts.find(a => a.time === tLabel);
 
-                // Alternating row background for readability
                 if (i % 2 === 0) {
                     doc.setFillColor(245, 245, 245);
                     doc.rect(41, cY - 11, 178, 23, 'F');
@@ -707,7 +704,6 @@
                 cY += 18;
             });
 
-            // Aesthetic Water Tracker (Perfectly spaced circles)
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(150, 150, 150);
@@ -716,7 +712,7 @@
             let wx = 62;
             doc.setDrawColor(primary[0], primary[1], primary[2]);
             for(let i=0; i<8; i++) {
-                doc.circle(wx, 686, 5, 'S'); // 'S' for Stroke/Outline
+                doc.circle(wx, 686, 5, 'S'); 
                 wx += 19.5;
             }
 
@@ -763,26 +759,22 @@
                 mY += 30;
             });
 
-            // --- 8. RIGHT COLUMN: TASK LIST (With Text Wrapping) ---
+            // --- 8. RIGHT COLUMN: TASK LIST ---
             let tdY = drawBox("TASK LIST", 240, 310, 332, 250);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(textCol[0], textCol[1], textCol[2]);
             
             todos.forEach(t => {
-                // Wrap text so long lists don't spill off the edge
                 let wrappedTask = doc.splitTextToSize(t, 290);
-                
                 drawCheck(250, tdY);
                 doc.text(wrappedTask, 268, tdY);
                 
-                // Calculate extra height needed if the text took multiple lines
                 let lineSpacing = (wrappedTask.length - 1) * 12;
-                
                 doc.setDrawColor(230, 230, 230);
                 doc.line(250, tdY + 6 + lineSpacing, 558, tdY + 6 + lineSpacing);
                 
-                tdY += 22 + lineSpacing; // Move down for the next task
+                tdY += 22 + lineSpacing; 
             });
 
             // --- 9. RIGHT COLUMN: BRAIN DUMP ---
@@ -797,7 +789,6 @@
             const pdfBlobUrl = doc.output('bloburl');
             window.open(pdfBlobUrl, '_blank');
 
-            // Reset Button
             btn.innerText = "✨ Generate My Premium Planner PDF"; 
             btn.style.opacity = "1"; 
         }
