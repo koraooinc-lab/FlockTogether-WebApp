@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,11 +47,14 @@
         .list-item { padding: 8px; border-bottom: 1px solid #E2E8F0; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between;}
         .list-item:hover { background: #EDF2F7; }
         
-        .del-btn { color: #E53E3E; font-weight: bold; cursor: pointer; border: none; background: none; margin-left: 5px; }
+        .del-btn { color: #E53E3E; font-weight: bold; cursor: pointer; border: none; background: none; }
         .del-btn:hover { color: #C53030; }
 
         .check-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
         .check-item input { margin-right: 10px; transform: scale(1.2); }
+
+        .day-column { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 15px; }
+        .day-column h4 { margin-top: 0; color: var(--primary); text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
 
         /* WIZARD & CHIP STYLES */
         #wizard-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 2000; }
@@ -64,20 +68,6 @@
         .chip { padding: 10px 18px; background: #EDF2F7; border: 2px solid transparent; border-radius: 20px; font-size: 14px; cursor: pointer; transition: 0.2s; color: #4A5568; font-weight: 600; user-select: none; }
         .chip:hover { background: #E2E8F0; }
         .chip.selected { background: #FAF5FF; border-color: #805AD5; color: #805AD5; }
-
-        /* DRAG AND DROP STYLES */
-        .day-column { background: #F7FAFC; border: 2px dashed transparent; border-radius: 10px; padding: 15px; transition: 0.2s; min-height: 100px; }
-        .day-column h4 { margin-top: 0; color: var(--primary); text-align: center; border-bottom: 2px solid var(--border); padding-bottom: 10px; pointer-events: none;}
-        .day-column.drag-over { background: #E6F2FF; border-color: var(--primary); }
-        
-        .draggable-task { 
-            background: white; border: 1px solid var(--border); border-radius: 8px; padding: 10px; 
-            margin-bottom: 8px; font-size: 12px; display: flex; justify-content: space-between; 
-            align-items: center; cursor: grab; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-            user-select: none; transition: transform 0.1s;
-        }
-        .draggable-task:active { cursor: grabbing; transform: scale(0.98); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .draggable-task span { pointer-events: none; }
     </style>
 </head>
 <body>
@@ -288,11 +278,10 @@
                     <div id="meds-listbox" style="display:flex; flex-direction:column; gap:5px;"></div>
                 </div>
 
-                <!-- DRAG AND DROP KANBAN BOARD -->
                 <div class="card">
-                    <h3 style="margin-top: 0; color: var(--dark);">📅 Interactive Week Board</h3>
-                    <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Drag and drop cards across the columns to manually adjust your schedule.</p>
-                    <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; align-items: flex-start;" id="weekly-overview"></div>
+                    <h3 style="margin-top: 0; color: var(--dark);">📅 The Week Ahead (Algorithm Overview)</h3>
+                    <p style="font-size: 13px; color: #555; margin-bottom: 15px;">Here is how the robot balanced your week.</p>
+                    <div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px;" id="weekly-overview"></div>
                 </div>
             </div>
 
@@ -304,9 +293,10 @@
     <script>
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
-        let db = JSON.parse(localStorage.getItem("flockData_v9")) || {
+        // Bumped version to v10 to wipe out the hardcoded medications safely
+        let db = JSON.parse(localStorage.getItem("flockData_v10")) || {
             username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0,
-            appointments: [], medications: ["Vyvanse (9 am)", "Vitamin D (Weekly)"],
+            appointments: [], medications: [], // <-- Medications scrubbed clean!
             weeklies: [], oneOffs: [],
             zones: ["Living Room", "Kitchen", "Master Bedroom", "Guest Bedroom", "Bathroom", "Half Bath", "Dining Room", "Office", "Laundry Room", "Garage", "Playroom", "Hallway"],
             tasks: ["Vacuum", "Sweep", "Mop", "Dust Surfaces", "Empty Trash", "Wipe Counters", "Clean Mirrors", "Clean Toilet", "Clean Tub/Shower", "Change Sheets", "Do Laundry", "Load Dishwasher", "Unload Dishwasher", "Pick Up Clutter", "Organize", "Water Plants"]
@@ -324,7 +314,7 @@
             if (db.username !== "") { document.getElementById('login-screen').style.display = 'none'; startApp(); }
         };
 
-        function saveData() { localStorage.setItem("flockData_v9", JSON.stringify(db)); }
+        function saveData() { localStorage.setItem("flockData_v10", JSON.stringify(db)); }
 
         function login() {
             let u = document.getElementById("username-input").value.trim(); let p = document.getElementById("password-input").value.trim();
@@ -388,7 +378,7 @@
             } catch(e) { document.getElementById('verse-text').innerText = "In the beginning God created the heaven and the earth. (Genesis 1:1)"; }
         }
 
-        // ================= WIZARD & AI GROUPING ALGORITHM (DYNAMIC WORD BANK VERSION) =================
+        // ================= WIZARD & AI GROUPING ALGORITHM =================
         let wizRooms = []; let wizCurrentIdx = 0; let wizTasksByRoom = {}; let finalGroupedTasks = [];
         
         function toggleChip(element) {
@@ -411,7 +401,10 @@
 
         function wizGoToStep2() {
             wizRooms = [];
-            document.querySelectorAll('#wiz-step-1 .chip.selected').forEach(chip => { wizRooms.push(chip.innerText); });
+            document.querySelectorAll('#wiz-step-1 .chip.selected').forEach(chip => {
+                wizRooms.push(chip.innerText);
+            });
+
             if(wizRooms.length === 0) return alert("Please select at least one room!");
             wizCurrentIdx = 0; wizTasksByRoom = {}; showRoomInput();
         }
@@ -430,10 +423,20 @@
 
         function wizProcessRoom() {
             let tasks = [];
-            document.querySelectorAll('#wiz-step-2 .chip.selected').forEach(chip => { tasks.push(chip.innerText); });
-            if(tasks.length > 0) { wizTasksByRoom[wizRooms[wizCurrentIdx]] = tasks; }
+            document.querySelectorAll('#wiz-step-2 .chip.selected').forEach(chip => {
+                tasks.push(chip.innerText);
+            });
+
+            if(tasks.length > 0) {
+                wizTasksByRoom[wizRooms[wizCurrentIdx]] = tasks;
+            }
+            
             wizCurrentIdx++; 
-            if(wizCurrentIdx < wizRooms.length) { showRoomInput(); } else { runMagicAlgorithm(); }
+            if(wizCurrentIdx < wizRooms.length) { 
+                showRoomInput(); 
+            } else { 
+                runMagicAlgorithm(); 
+            }
         }
 
         function categorizeTask(task) {
@@ -463,8 +466,11 @@
         }
 
         function wizFinish() { 
-            finalGroupedTasks.forEach(taskName => { autoScheduleEngine(taskName, 'weekly'); }); 
-            closeWizard(); alert("Success! Your tasks have been load-balanced and will repeat every week!"); 
+            finalGroupedTasks.forEach(taskName => { 
+                autoScheduleEngine(taskName, 'weekly'); 
+            }); 
+            closeWizard(); 
+            alert("Success! Your tasks have been load-balanced and will repeat every week!"); 
         }
 
         function getTaskLoadForDate(dateStr, dayOfWeekIndex) { let wCount = db.weeklies.filter(w => w.dayOfWeek === dayOfWeekIndex).length; let oCount = db.oneOffs.filter(o => o.dateStr === dateStr).length; return wCount + oCount; }
@@ -477,39 +483,6 @@
                 db.oneOffs.push({ name: name, dateStr: bestDate });
             }
             saveData(); refreshAllLists();
-        }
-
-        // ================= DRAG AND DROP KANBAN ENGINE =================
-        function allowDrop(ev) {
-            ev.preventDefault();
-            ev.currentTarget.classList.add('drag-over');
-        }
-        function dragLeave(ev) {
-            ev.currentTarget.classList.remove('drag-over');
-        }
-        function drag(ev, type, index) {
-            ev.dataTransfer.setData("type", type);
-            ev.dataTransfer.setData("index", index);
-        }
-        function drop(ev, el) {
-            ev.preventDefault();
-            el.classList.remove('drag-over');
-            
-            let type = ev.dataTransfer.getData("type");
-            let index = parseInt(ev.dataTransfer.getData("index"));
-            if(isNaN(index)) return;
-
-            let targetDay = parseInt(el.getAttribute("data-day"));
-            let targetDate = el.getAttribute("data-date");
-            
-            if (type === 'weekly') {
-                db.weeklies[index].dayOfWeek = targetDay;
-            } else if (type === 'oneoff') {
-                db.oneOffs[index].dateStr = targetDate;
-            }
-            
-            saveData();
-            refreshAllLists();
         }
 
         function refreshAllLists() {
@@ -525,35 +498,12 @@
             let tl = document.getElementById('tasks-listbox'); tl.innerHTML = '';
             db.tasks.forEach((t, i) => { tl.innerHTML += `<div class="list-item" style="background:white;"><span>${t}</span> <button class="del-btn" onclick="delTask(${i})">X</button></div>`; });
 
-            // Render Interactive Drag-and-Drop Columns
             let wg = document.getElementById('weekly-overview'); wg.innerHTML = '';
             for(let i=0; i<7; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i); let dateStr = getLocalDateStr(d); let dayIdx = d.getDay();
-                
-                // Establish column drop zone
-                let dayHtml = `<div class="day-column" style="min-width: 170px; flex:1;" data-day="${dayIdx}" data-date="${dateStr}" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event, this)">
-                                <h4>${i===0 ? "Today" : dayNames[dayIdx]}</h4>`;
-                
-                // Inject Draggable Weeklies
-                db.weeklies.forEach((w, idx) => { 
-                    if(w.dayOfWeek === dayIdx) { 
-                        dayHtml += `<div class="draggable-task" draggable="true" ondragstart="drag(event, 'weekly', ${idx})">
-                                        <span style="flex:1;">${w.name}</span>
-                                        <button class="del-btn" style="pointer-events: auto;" onclick="delWeekly(${idx})">X</button>
-                                    </div>`; 
-                    } 
-                });
-                
-                // Inject Draggable One-Offs
-                db.oneOffs.forEach((o, idx) => { 
-                    if(o.dateStr === dateStr) { 
-                        dayHtml += `<div class="draggable-task" draggable="true" ondragstart="drag(event, 'oneoff', ${idx})" style="color:#805AD5;">
-                                        <span style="flex:1;">${o.name}</span>
-                                        <button class="del-btn" style="pointer-events: auto;" onclick="delOneOff(${idx})">X</button>
-                                    </div>`; 
-                    } 
-                });
-                
+                let dayHtml = `<div class="day-column" style="min-width: 150px; flex:1;"><h4>${i===0 ? "Today" : dayNames[dayIdx]}</h4>`;
+                db.weeklies.forEach((w, idx) => { if(w.dayOfWeek === dayIdx) { dayHtml += `<div style="font-size:12px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:5px; display:flex; justify-content:space-between;"><span>${w.name}</span><button class="del-btn" onclick="delWeekly(${idx})">X</button></div>`; } });
+                db.oneOffs.forEach((o, idx) => { if(o.dateStr === dateStr) { dayHtml += `<div style="font-size:12px; margin-bottom:5px; border-bottom:1px solid #eee; padding-bottom:5px; display:flex; justify-content:space-between; color:#805AD5;"><span>${o.name}</span><button class="del-btn" onclick="delOneOff(${idx})">X</button></div>`; } });
                 wg.innerHTML += dayHtml + `</div>`;
             }
             refreshDashboard();
@@ -611,12 +561,11 @@
                 if(el.querySelector('input').checked) selfCareItems.push(el.querySelector('.task-name').innerText);
             });
 
-            // Setup Task List with Emoji-Stripping to prevent PDF mojibake
+            // Setup Task List with Emoji-Stripping
             let todos = [`Bible Reading: ${reading}`];
             document.querySelectorAll('.task-print-item').forEach(el => { 
                 if(el.querySelector('input').checked) {
                     let rawText = el.querySelector('.task-name').innerText;
-                    // Keep only standard printable ASCII characters (strips emojis and strange symbols)
                     let cleanText = rawText.replace(/[^\x20-\x7E]/g, '').trim(); 
                     todos.push(cleanText);
                 }
@@ -627,7 +576,7 @@
             // --- 2. SET UP THEMES ---
             let themeSel = document.getElementById('print-theme').value;
             let primary = [0, 123, 255]; // Deep Blue
-            let accent = [220, 160, 0];  // Deep Gold (Better contrast)
+            let accent = [220, 160, 0];  // Deep Gold
             let textCol = [60, 60, 60];  // Dark Gray
             let lightBg = [252, 253, 255]; 
 
@@ -636,7 +585,6 @@
             else if (themeSel === 'botanical') { primary = [90, 115, 83]; accent = [138, 154, 134]; lightBg = [250, 253, 250]; }
             else if (themeSel === 'minimal') { primary = [0, 0, 0]; accent = [80, 80, 80]; lightBg = [255, 255, 255]; }
 
-            // --- HELPER: DRAW AESTHETIC BOX WITH COLORED HEADER ---
             function drawBox(title, x, y, w, h, isAccent = false) {
                 let col = isAccent ? accent : primary;
                 
@@ -761,10 +709,19 @@
                 wx += 19.5;
             }
 
-            // --- 6. RIGHT COLUMN: VERSE ---
+            // --- 6. RIGHT COLUMN: DYNAMIC VERSE ---
             doc.setDrawColor(accent[0], accent[1], accent[2]);
             doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
-            doc.roundedRect(240, 80, 332, 60, 6, 6, 'FD');
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'italic');
+            // Calculate exact height needed for the verse text
+            let wrappedVerse = doc.splitTextToSize(`"${verseText}"`, 310);
+            let verseBoxHeight = Math.max(60, 42 + (wrappedVerse.length * 12));
+            
+            // Draw Dynamic Box
+            doc.roundedRect(240, 80, 332, verseBoxHeight, 6, 6, 'FD');
+            
             doc.setFontSize(11);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(accent[0], accent[1], accent[2]);
@@ -773,11 +730,13 @@
             doc.setFontSize(10);
             doc.setFont('helvetica', 'italic');
             doc.setTextColor(textCol[0], textCol[1], textCol[2]);
-            let wrappedVerse = doc.splitTextToSize(`"${verseText}"`, 310);
             doc.text(wrappedVerse, 406, 116, { align: 'center' });
 
+            // Set the dynamic Y offset for everything below the verse
+            let nextY = 80 + verseBoxHeight + 10;
+
             // --- 7. RIGHT COLUMN: PRIORITIES & MEALS ---
-            let tY = drawBox("TOP PRIORITY", 240, 150, 160, 150, true);
+            let tY = drawBox("TOP PRIORITY", 240, nextY, 160, 150, true);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(accent[0], accent[1], accent[2]);
@@ -793,7 +752,7 @@
                 tY += 18;
             });
 
-            let mY = drawBox("MEAL PLAN", 412, 150, 160, 150);
+            let mY = drawBox("MEAL PLAN", 412, nextY, 160, 150);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(textCol[0], textCol[1], textCol[2]);
             ["Breakfast:", "Lunch:", "Dinner:", "Snack:"].forEach(m => {
@@ -804,8 +763,11 @@
                 mY += 30;
             });
 
+            let taskListY = nextY + 150 + 10;
+
             // --- 8. RIGHT COLUMN: TASK LIST ---
-            let tdY = drawBox("TASK LIST", 240, 310, 332, 250);
+            // Reduced max height slightly to accommodate dynamic verse push-down
+            let tdY = drawBox("TASK LIST", 240, taskListY, 332, 230);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(textCol[0], textCol[1], textCol[2]);
@@ -822,8 +784,10 @@
                 tdY += 22 + lineSpacing; 
             });
 
+            let brainDumpY = taskListY + 230 + 10;
+
             // --- 9. RIGHT COLUMN: BRAIN DUMP ---
-            let bdY = drawBox("BRAIN DUMP", 240, 570, 332, 140);
+            let bdY = drawBox("BRAIN DUMP", 240, brainDumpY, 332, 120);
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(textCol[0], textCol[1], textCol[2]);
