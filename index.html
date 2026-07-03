@@ -22,6 +22,7 @@
         .btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; transition: 0.2s; text-align: center; display: inline-block;}
         .btn:hover { opacity: 0.85; transform: translateY(-2px); }
         .btn-green { background: #48BB78; } .btn-red { background: #E53E3E; } .btn-purple { background: #805AD5; } .btn-gold { background: #D4AF37; } .btn-dark { background: var(--dark); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
         #app-screen { display: none; display: flex; height: 100vh; overflow: hidden; }
         
@@ -176,7 +177,7 @@
                     <div style="text-align: center; display: flex; flex-direction: column; justify-content: center;">
                         <h3 style="color: #D4AF37; margin-top: 0;">📚 Today's Reading</h3>
                         <h2 id="reading-text" style="color: var(--dark); margin: 5px 0 15px 0;">Genesis 1-4</h2>
-                        <button class="btn btn-green" onclick="advanceReading()">Mark Read & Advance</button>
+                        <button id="reading-btn" class="btn btn-green" onclick="advanceReading()">Mark Read & Advance</button>
                     </div>
                 </div>
 
@@ -292,8 +293,9 @@
     <script>
         const SECRET_WEBHOOK = "https://discord.com/api/webhooks/1522203288114696282/B3aLKscEl6urVYPQP1H1HFdiM4EgwJaTc2Y73jLDqM2L5mfnlBSFUqWd29drY_f4PNcQ";
 
-        let db = JSON.parse(localStorage.getItem("flockData_v10")) || {
-            username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0,
+        // Bumped version to v12 to force strict lockout and timezone fix
+        let db = JSON.parse(localStorage.getItem("flockData_v12")) || {
+            username: "", password: "", lastOpened: "", streakDays: 0, readingIndex: 0, lastReadDate: "",
             appointments: [], medications: [], 
             weeklies: [], oneOffs: [],
             zones: ["Living Room", "Kitchen", "Master Bedroom", "Guest Bedroom", "Bathroom", "Half Bath", "Dining Room", "Office", "Laundry Room", "Garage", "Playroom", "Hallway"],
@@ -308,11 +310,13 @@
         function getLocalDateStr(d) { let offset = d.getTimezoneOffset() * 60000; return new Date(d.getTime() - offset).toISOString().split('T')[0]; }
 
         window.onload = () => {
-            document.getElementById('print-date').valueAsDate = new Date();
+            // Apply timezone offset so late nights don't register as tomorrow!
+            let d = new Date();
+            document.getElementById('print-date').valueAsDate = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
             if (db.username !== "") { document.getElementById('login-screen').style.display = 'none'; startApp(); }
         };
 
-        function saveData() { localStorage.setItem("flockData_v10", JSON.stringify(db)); }
+        function saveData() { localStorage.setItem("flockData_v12", JSON.stringify(db)); }
 
         function login() {
             let u = document.getElementById("username-input").value.trim(); let p = document.getElementById("password-input").value.trim();
@@ -346,9 +350,49 @@
             let sBook = start.substring(0, start.lastIndexOf(' ')); let eBook = end.substring(0, end.lastIndexOf(' '));
             return (sBook === eBook) ? `${sBook} ${start.substring(start.lastIndexOf(' ')+1)}-${end.substring(end.lastIndexOf(' ')+1)}` : `${start} - ${end}`;
         }
-        function updateReadingUI() { document.getElementById('reading-text').innerText = getReadingString(); }
+
+        function updateReadingUI() { 
+            document.getElementById('reading-text').innerText = getReadingString(); 
+            let btn = document.getElementById('reading-btn');
+            
+            if(db.lastReadDate === new Date().toDateString()) {
+                btn.innerText = "Completed Today! ✅";
+                btn.style.backgroundColor = "#A0AEC0"; 
+                btn.disabled = true;
+            } else {
+                btn.innerText = "Mark Read & Advance";
+                btn.style.backgroundColor = "#48BB78"; 
+                btn.disabled = false;
+            }
+        }
         
-        async function advanceReading() { await postToDiscord(); db.readingIndex += 4; if(db.readingIndex >= allChapters.length) db.readingIndex = 0; saveData(); updateReadingUI(); }
+        async function advanceReading() { 
+            let btn = document.getElementById('reading-btn');
+            if (btn.disabled) return; // Hard lock to prevent multi-clicking
+            
+            let today = new Date().toDateString();
+            if (db.lastReadDate === today) {
+                alert("You have already logged your reading for today!");
+                return;
+            }
+
+            // Immediately lock UI
+            btn.innerText = "Posting... ⏳";
+            btn.disabled = true;
+            btn.style.backgroundColor = "#A0AEC0"; 
+
+            // Advance DB
+            db.lastReadDate = today;
+            db.readingIndex += 4; 
+            if(db.readingIndex >= allChapters.length) db.readingIndex = 0; 
+            saveData(); 
+            
+            // Ping Discord
+            await postToDiscord(); 
+            
+            // Re-render UI to final Completed state
+            updateReadingUI();
+        }
 
         async function postToDiscord() {
             if (!SECRET_WEBHOOK || SECRET_WEBHOOK.includes("YOUR_WEBHOOK_LINK_HERE")) return;
@@ -508,7 +552,7 @@
         
         function dropTask(ev, targetDateStr, targetDayIdx) {
             ev.preventDefault();
-            ev.currentTarget.style.backgroundColor = "white"; // Reset column background
+            ev.currentTarget.style.backgroundColor = "white"; 
             
             let type = ev.dataTransfer.getData("taskType");
             let index = parseInt(ev.dataTransfer.getData("taskIndex"));
@@ -540,7 +584,6 @@
             for(let i=0; i<7; i++) {
                 let d = new Date(); d.setDate(d.getDate() + i); let dateStr = getLocalDateStr(d); let dayIdx = d.getDay();
                 
-                // Day Column acts as the Drop Zone
                 let dayHtml = `<div class="day-column" style="min-width: 170px; flex:1;" 
                                     ondragover="allowDrop(event)" 
                                     ondragenter="dragEnter(event)" 
