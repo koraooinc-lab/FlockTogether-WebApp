@@ -81,32 +81,45 @@
         .pdf-body iframe { width: 100%; height: 100%; border: none; border-radius: 8px; background: white; }
         .pdf-footer { padding: 15px 20px; background: white; border-top: 1px solid #E2E8F0; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
 
-        /* =========================================
-           MOBILE RESPONSIVENESS OVERHAUL
+       /* =========================================
+           BULLETPROOF MOBILE RESPONSIVENESS
         ========================================= */
-        @media (max-width: 768px) {
-            #app-screen { flex-direction: column; }
+        @media (max-width: 850px) {
+            /* Unlock the height so the page naturally scrolls instead of squishing */
+            #app-screen { flex-direction: column !important; height: auto !important; min-height: 100vh; overflow-y: auto !important; }
             
-            /* Turn sidebar into a top navigation bar */
-            .sidebar { width: 100%; padding: 10px 15px; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; align-items: center; justify-content: space-between; overflow-x: auto; gap: 5px; }
-            .sidebar .logo-container { display: none; } /* Hide big logo on mobile */
-            .tab-btn { margin-bottom: 0; text-align: center; padding: 10px; font-size: 14px; white-space: nowrap; flex: 1; }
+            /* Convert sidebar to a horizontal, swipeable top navigation */
+            .sidebar { width: 100% !important; padding: 10px !important; display: flex !important; flex-direction: row !important; overflow-x: auto !important; border-right: none !important; border-bottom: 2px solid var(--border) !important; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+            .sidebar::-webkit-scrollbar { display: none; } /* Hide ugly scrollbar on mobile */
+            .sidebar .logo-container { display: none !important; } 
             
-            .content { padding: 15px; }
+            /* Prevent buttons from squishing; force them to maintain their shape */
+            .tab-btn { margin-bottom: 0 !important; margin-right: 10px !important; padding: 10px 20px !important; font-size: 14px !important; display: inline-block !important; width: auto !important; flex: 0 0 auto !important; white-space: nowrap !important; }
             
-            /* Collapse all 2-column grids into a single stacked column */
-            .grid-2 { grid-template-columns: 1fr; gap: 15px; }
+            /* Ensure the main content area expands */
+            .content { padding: 15px !important; overflow: visible !important; height: auto !important; }
             
-            /* Tighten up cards to save screen real estate */
-            .card { padding: 15px; margin-bottom: 15px; }
+            /* FORCE grids to become single stacked columns */
+            .grid-2 { display: flex !important; flex-direction: column !important; gap: 15px !important; }
             
-            .dashboard-header { flex-direction: column; align-items: flex-start !important; gap: 15px; }
+            /* Tighten up cards so they don't bleed off the screen */
+            .card { padding: 20px 15px !important; margin-bottom: 15px !important; width: 100% !important; box-sizing: border-box !important; }
+            
+            /* Fix Dashboard Header alignment */
+            .dashboard-header { flex-direction: column !important; align-items: flex-start !important; gap: 15px !important; }
             .dashboard-header h1 { font-size: 26px !important; }
-            #streak-badge { align-self: flex-start; }
+            #nickname-input { max-width: 100% !important; }
+            #streak-badge { align-self: flex-start !important; }
             
-            /* Shrink Wizard */
-            .wizard-box { padding: 25px; }
-            .wizard-title { font-size: 20px; }
+            /* Ensure the Wizard fits */
+            .wizard-box { padding: 20px !important; width: 95% !important; }
+            .wizard-title { font-size: 20px !important; }
+
+            /* Stack PDF Modal buttons vertically on phones */
+            .pdf-modal-box { width: 95% !important; height: 90% !important; }
+            .pdf-footer { flex-direction: column !important; }
+            .pdf-footer .btn { width: 100% !important; margin-bottom: 5px !important; }
+        }
         }
     </style>
 </head>
